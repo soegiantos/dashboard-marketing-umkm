@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Marketing — Aplikasi Introspeksi UMKM</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.js" integrity="sha384-uteMfOloLDGt042uDz+xHGF3ym63/WQ6rFq7murQRG8Ih7QrXGEGNtWd8688sb4O" crossorigin="anonymous"></script>
+<style>
+:root{--gold:#e3b959;--gold-soft:#f3d68a;--bg:#12100c;--surface:#1d1a14;--surface2:#26221a;--line:#3a3325;--ink:#f2ead8;--ink-soft:#c9bfa5;--ink-mut:#9a8f74;--ok:#7fc98a;--warn:#e0a35a}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.55;min-height:100vh}
+a{color:var(--gold)}
+.wrap{max-width:1060px;margin:0 auto;padding:18px 14px 60px}
+header.app-head{text-align:center;padding:26px 10px 8px}
+header.app-head h1{font-size:1.5rem;color:var(--gold);letter-spacing:.3px}
+header.app-head .sub{color:var(--ink-soft);font-size:.95rem;margin-top:6px}
+header.app-head .lab{color:var(--ink-mut);font-size:.85rem;margin-top:10px;line-height:1.5}
+.gold-rule{height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:16px auto 4px;max-width:520px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:14px}
+.card h2{font-size:1.15rem;color:var(--gold);margin-bottom:8px}
+.card h3{font-size:1rem;color:var(--gold-soft);margin:14px 0 6px}
+.card p{color:var(--ink-soft);font-size:.95rem}
+.muted{color:var(--ink-mut);font-size:.88rem}
+label{display:block;font-size:.92rem;color:var(--ink-soft);margin:12px 0 4px}
+input[type=email],input[type=password],input[type=text],select,textarea{width:100%;background:#14110c;border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:11px 12px;font-size:1rem}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--gold);outline-offset:1px}
+textarea{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;min-height:220px;resize:vertical}
+button{cursor:pointer;font-size:1rem;border-radius:10px;padding:11px 18px;border:1px solid var(--gold);background:var(--gold);color:#1a1405;font-weight:600}
+button.ghost{background:transparent;color:var(--gold)}
+button.kecil{padding:7px 12px;font-size:.9rem}
+button:disabled{opacity:.55;cursor:default}
+.linkbtn{background:none;border:none;color:var(--gold);text-decoration:underline;padding:6px 2px;font-size:.95rem}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.row>*{flex:1 1 auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:12px}
+.stat{background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:14px}
+.stat .angka{font-size:1.55rem;font-weight:700;color:var(--gold);line-height:1.2}
+.stat .lbl{font-size:.88rem;color:var(--ink-soft);margin-top:4px}
+table{width:100%;border-collapse:collapse;margin-top:10px;font-size:.92rem}
+th,td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top}
+th{color:var(--gold);font-weight:600}
+td{color:var(--ink-soft)}
+nav.tabbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+nav.tabbar button{flex:1 1 150px;background:var(--surface);color:var(--ink-soft);border:1px solid var(--line);padding:11px 8px;font-size:.93rem}
+nav.tabbar button.aktif{background:var(--gold);color:#1a1405;border-color:var(--gold)}
+.layar{display:none}
+.layar.aktif{display:block}
+.belum-cukup{background:var(--surface2);border:1px dashed var(--gold);border-radius:12px;padding:18px;text-align:center;margin-top:14px}
+.belum-cukup p{color:var(--ink-soft)}
+.spanduk-contoh{background:#3a2f10;border:1px solid var(--gold);color:var(--gold-soft);border-radius:10px;padding:10px 14px;font-weight:700;text-align:center;margin-top:14px}
+.contoh-box{margin-top:12px}
+.contoh-box .card{border-color:var(--gold)}
+.warn-box{background:var(--surface2);border:1px solid var(--warn);border-radius:12px;padding:14px;margin-top:14px}
+.warn-box p{color:var(--ink-soft)}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px}
+.topbar .siapa{color:var(--ink-soft);font-size:.9rem}
+.kode-chip{display:inline-flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--gold);border-radius:12px;padding:12px 14px;margin:8px 8px 0 0;font-size:1.05rem}
+.kode-chip b{color:var(--gold);letter-spacing:1px}
+.popup-overlay{position:fixed;inset:0;z-index:260;background:rgba(0,0,0,.74);display:none;align-items:center;justify-content:center;padding:20px 14px}
+.popup-overlay.show{display:flex}
+.popup-card{max-width:440px;width:100%;background:var(--surface);border:1.5px solid var(--gold);border-radius:16px;padding:22px;box-shadow:0 12px 40px rgba(0,0,0,.5)}
+.popup-card h3{font-size:1.18rem;color:var(--gold)}
+.popup-card p{margin-top:10px;color:var(--ink-soft);font-size:.97rem;line-height:1.55;white-space:pre-line}
+.popup-card .aksi{margin-top:16px;text-align:right}
+.footnote{margin-top:26px;text-align:center;color:var(--ink-mut);font-size:.83rem;line-height:1.6}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="app-head">
+    <h1>Dashboard Marketing</h1>
+    <p class="sub">Aplikasi Introspeksi UMKM — pantau pengguna yang Anda kawal lewat kode marketing</p>
+    <div class="gold-rule"></div>
+    <p class="lab">Dr. Ir. Soegianto Soelistiono, M.Si.<br>Lab Sistem Cerdas Fisika, FST Universitas Airlangga</p>
+  </header>
+
+  <!-- ============ LAYAR MASUK ============ -->
+  <section id="layarMasuk">
+    <div class="card" id="panelMasuk">
+      <h2>Masuk Dashboard Marketing</h2>
+      <p>Dashboard ini hanya untuk marketing yang terdaftar oleh pemilik aplikasi. Anda hanya melihat pengguna yang mendaftar lewat kode marketing Anda — UMKM, Pemda, dan investor yang Anda kawal. Tidak ada data keuangan usaha di aplikasi ini.</p>
+      <label for="emailMasuk">Email</label>
+      <input type="email" id="emailMasuk" autocomplete="email" placeholder="contoh: nama@contoh.id">
+      <label for="sandiMasuk">Kata sandi</label>
+      <input type="password" id="sandiMasuk" autocomplete="current-password" placeholder="Kata sandi Anda">
+      <div class="row" style="margin-top:16px">
+        <button id="btnMasuk" type="button">Masuk</button>
+        <button id="btnKeDaftar" type="button" class="ghost">Daftar akun baru</button>
+      </div>
+      <p style="margin-top:12px"><button id="btnKeLupa" type="button" class="linkbtn">Lupa kata sandi?</button></p>
+      <p class="muted" style="margin-top:10px">Kata sandi ini khusus untuk aplikasi ini, bukan kata sandi email Anda.</p>
+    </div>
+
+    <div class="card hidden" id="panelDaftar">
+      <h2>Daftar akun baru</h2>
+      <p>Setelah mendaftar, buka email Anda dan ketuk tautan konfirmasi sebelum masuk pertama kali. Pendaftaran saja belum memberi akses: akun Anda harus didaftarkan dulu sebagai marketing oleh pemilik aplikasi.</p>
+      <label for="emailDaftar">Email</label>
+      <input type="email" id="emailDaftar" autocomplete="email" placeholder="contoh: nama@contoh.id">
+      <label for="sandiDaftar">Kata sandi (minimal 6 karakter)</label>
+      <input type="password" id="sandiDaftar" autocomplete="new-password" placeholder="Buat kata sandi">
+      <div class="row" style="margin-top:16px">
+        <button id="btnDaftar" type="button">Daftar</button>
+        <button id="btnBatalDaftar" type="button" class="ghost">Kembali masuk</button>
+      </div>
+      <p class="muted" style="margin-top:10px">Kata sandi ini khusus untuk aplikasi ini, bukan kata sandi email Anda.</p>
+    </div>
+
+    <div class="card hidden" id="panelLupa">
+      <h2>Lupa kata sandi?</h2>
+      <p>Masukkan email akun Anda. Kami akan mengirim tautan untuk membuat kata sandi baru.</p>
+      <label for="emailLupa">Email</label>
+      <input type="email" id="emailLupa" autocomplete="email" placeholder="contoh: nama@contoh.id">
+      <div class="row" style="margin-top:16px">
+        <button id="btnKirimLupa" type="button">Kirim tautan</button>
+        <button id="btnBatalLupa" type="button" class="ghost">Kembali masuk</button>
+      </div>
+    </div>
+
+    <div class="card hidden" id="panelSandiBaru">
+      <h2>Buat kata sandi baru</h2>
+      <p>Masukkan kata sandi baru untuk akun Anda, lalu ketik ulang untuk memastikan.</p>
+      <label for="sandiBaru">Kata sandi baru (minimal 6 karakter)</label>
+      <input type="password" id="sandiBaru" autocomplete="new-password" placeholder="Buat kata sandi baru">
+      <label for="sandiBaru2">Ulangi kata sandi baru</label>
+      <input type="password" id="sandiBaru2" autocomplete="new-password" placeholder="Ketik ulang kata sandi baru">
+      <div class="row" style="margin-top:16px">
+        <button id="btnSimpanSandi" type="button">Simpan kata sandi baru</button>
+      </div>
+      <p class="muted" style="margin-top:10px">Kata sandi ini khusus untuk aplikasi ini, bukan kata sandi email Anda.</p>
+    </div>
+  </section>
+
+  <!-- ============ DASHBOARD ============ -->
+  <section id="layarDashboard" class="hidden">
+    <div class="topbar">
+      <p class="siapa" id="infoPeran"></p>
+      <button id="btnKeluar" type="button" class="ghost kecil">Keluar</button>
+    </div>
+
+    <div class="card">
+      <p>Anda hanya melihat pengguna yang mendaftar lewat kode marketing Anda. Tidak ada data keuangan usaha di aplikasi ini, dan Anda tidak melihat pengguna marketing lain.</p>
+    </div>
+
+    <div class="card hidden" id="kotakSetup">
+      <h2>Pengaturan cloud</h2>
+      <p>Pengaturan cloud untuk dashboard ini belum dijalankan. Salin seluruh teks di bawah ini, tempel di SQL Editor cloud, lalu klik Run. Setelah itu muat ulang halaman ini.</p>
+      <label for="sqlText">SQL pengaturan Dashboard Marketing</label>
+      <textarea id="sqlText" readonly></textarea>
+      <div class="row" style="margin-top:12px">
+        <button id="btnSalinSql" type="button">Salin SQL</button>
+      </div>
+    </div>
+
+    <nav class="tabbar" id="tabbar">
+      <button type="button" data-layar="ringkasan" class="aktif">Ringkasan</button>
+      <button type="button" data-layar="pengguna">Pengguna yang dikawal</button>
+      <button type="button" data-layar="kode">Kode saya</button>
+      <button type="button" data-layar="semua" id="tabSemua" class="hidden">Semua marketing</button>
+    </nav>
+
+    <section class="layar aktif" id="layarRingkasan">
+      <div class="card">
+        <h2>Ringkasan</h2>
+        <p class="muted">Jumlah pengguna yang mendaftar lewat kode marketing Anda.</p>
+        <div id="ringkasanIsi"><p class="muted">Memuat ringkasan…</p></div>
+        <div class="row" style="margin-top:12px">
+          <button type="button" class="ghost kecil" data-contoh="ringkasan">Lihat contoh</button>
+        </div>
+        <div id="contohRingkasan" class="contoh-box hidden"></div>
+      </div>
+    </section>
+
+    <section class="layar" id="layarPengguna">
+      <div class="card">
+        <h2>Pengguna yang dikawal</h2>
+        <p>Daftar pengguna yang mendaftar lewat kode marketing Anda. Hanya email, jenis pengguna, kota bila ada, dan tanggal daftar yang tampil — tidak ada data keuangan usaha.</p>
+        <div id="penggunaIsi"><p class="muted">Memuat daftar pengguna…</p></div>
+        <div class="row" style="margin-top:12px">
+          <button id="btnMuatLebihPengguna" type="button" class="ghost kecil hidden">Muat lebih banyak</button>
+          <button type="button" class="ghost kecil" data-contoh="pengguna">Lihat contoh</button>
+        </div>
+        <div id="contohPengguna" class="contoh-box hidden"></div>
+      </div>
+    </section>
+
+    <section class="layar" id="layarKode">
+      <div class="card">
+        <h2>Kode saya</h2>
+        <p>Kode marketing yang Anda kawal. Bagikan kode ini kepada calon pengguna — mereka yang mendaftar dengan kode ini tercatat sebagai pengguna yang Anda kawal.</p>
+        <div id="kodeIsi"><p class="muted">Memuat kode Anda…</p></div>
+        <div class="row" style="margin-top:12px">
+          <button type="button" class="ghost kecil" data-contoh="kode">Lihat contoh</button>
+        </div>
+        <div id="contohKode" class="contoh-box hidden"></div>
+      </div>
+    </section>
+
+    <section class="layar" id="layarSemua">
+      <div class="card">
+        <h2>Semua marketing</h2>
+        <p class="muted">Layar ini hanya untuk pemilik aplikasi: semua marketing beserta jumlah pengguna yang dikawal tiap kode.</p>
+        <div id="semuaIsi"><p class="muted">Memuat daftar marketing…</p></div>
+        <div class="row" style="margin-top:12px">
+          <button type="button" class="ghost kecil" data-contoh="semua">Lihat contoh</button>
+        </div>
+        <div id="contohSemua" class="contoh-box hidden"></div>
+      </div>
+      <div class="card">
+        <h2>Tambah marketing</h2>
+        <p>Marketing baru ditambahkan di sini. Bila kolom kode dikosongkan, kode dibuat otomatis (6 huruf/angka). Bila Anda mengisi kode sendiri, kodenya harus 6 huruf atau angka, contoh: UMKM30. Kode yang dimasukkan di sini juga dibuat di daftar kode marketing, jadi langsung bisa dipakai saat daftar.</p>
+        <label for="mkNama">Nama marketing</label>
+        <input type="text" id="mkNama" autocomplete="off" placeholder="contoh: Rina Marketing">
+        <label for="mkEmail">Email marketing</label>
+        <input type="email" id="mkEmail" autocomplete="email" placeholder="contoh: rina@contoh.id">
+        <label for="mkKode">Kode marketing (kosongkan untuk dibuat otomatis)</label>
+        <input type="text" id="mkKode" autocomplete="off" placeholder="contoh: UMKM30">
+        <div class="row" style="margin-top:16px">
+          <button id="btnTambahMarketing" type="button">Tambah marketing</button>
+        </div>
+      </div>
+    </section>
+  </section>
+
+  <p class="footnote">Dashboard Marketing — Aplikasi Introspeksi UMKM<br>Dr. Ir. Soegianto Soelistiono, M.Si. — Lab Sistem Cerdas Fisika, FST Universitas Airlangga<br>Pemantauan jumlah pengguna saja. Tidak ada data keuangan usaha, dan seorang marketing hanya melihat pengguna yang mendaftar lewat kodenya sendiri.</p>
+</div>
+
+<!-- Popup ramah -->
+<div class="popup-overlay" id="popupOverlay" role="dialog" aria-modal="true" aria-labelledby="popupJudul">
+  <div class="popup-card">
+    <h3 id="popupJudul"></h3>
+    <p id="popupIsi"></p>
+    <div class="aksi"><button id="btnPopupTutup" type="button">Mengerti</button></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+var MARKETING_URL = "https://dashboard-marketing-umkm.vercel.app/";
+var EMAIL_PEMILIK = "soegianto@fst.unair.ac.id";
+var CLOUD_URL = "https://bdnqsxwypbrdiwaxydoh.supabase.co";
+var CLOUD_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJkbnFzeHd5cGJyZGl3YXh5ZG9oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ1OTQ3NDUsImV4cCI6MjExMDE3MDc0NX0.MsdIzw-CAqJiBp3McXZ-6XLzLakmo0S5w7RhHHXMCQc";
+var ALFABET_KODE = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+/* SQL pengaturan cloud (salinan sql-marketing-app.sql; ditampilkan di
+   dashboard bila tabel/RPC belum ada di cloud). */
+var SQL_TEXT =
+["-- ============================================================================",
+  "-- SQL DASHBOARD MARKETING — APLIKASI INTROSPEKSI UMKM",
+  "-- ============================================================================",
+  "-- Proyek cloud : aplikasi-introspeksi-umkm",
+  "-- Ref          : bdnqsxwypbrdiwaxydoh",
+  "--",
+  "-- TUJUAN FILE",
+  "-- Membuat 1 tabel izin + 2 fungsi RPC untuk aplikasi marketing terpisah",
+  "-- (dashboard-marketing-umkm): setiap marketing memantau JUMLAH pengguna",
+  "-- yang dikawalnya — UMKM, Pemda, dan investor — yang mendaftar lewat kode",
+  "-- marketing miliknya. Aplikasi ini TIDAK menampilkan data keuangan usaha",
+  "-- apa pun, dan seorang marketing TIDAK PERNAH melihat pengguna marketing",
+  "-- lain: pembatasan itu ditegakkan DI DALAM RPC di bawah, bukan hanya di",
+  "-- tampilan aplikasi.",
+  "--",
+  "-- CARA MENJALANKAN",
+  "-- 1. Buka Dashboard proyek di atas -> SQL Editor -> New query.",
+  "-- 2. Tempel SELURUH isi file ini, lalu klik \"Run\".",
+  "-- 3. File ini idempotent (aman dijalankan ulang).",
+  "--",
+  "-- PRASYARAT",
+  "-- File sql-marketing.sql (tabel marketing_kode, fungsi cek_kode_marketing",
+  "-- dan hitung_pendaftar_marketing, kolom profiles.kode_marketing) SUDAH",
+  "-- dijalankan sebelumnya — aplikasi marketing memakai",
+  "-- hitung_pendaftar_marketing untuk hitungan UMKM di layar pemilik.",
+  "--",
+  "-- PERINGATAN — FILE INI HANYA MENAMBAH DUA KOLOM PADA TABEL YANG SUDAH ADA",
+  "-- File ini membuat 1 tabel BARU (akses_marketing) dan 4 fungsi BARU.",
+  "-- Satu-satunya perubahan pada tabel yang sudah ada:",
+  "--   * investor_profil: tambah kolom kode_marketing (bila belum ada).",
+  "--   * akses_pemda:     tambah kolom kode_marketing (bila belum ada)",
+  "--     + 1 kebijakan UPDATE agar pengguna bisa mengisi kode marketing",
+  "--     pada barisnya SENDIRI, hanya bila kolom itu masih kosong.",
+  "-- Tabel yang sudah ada TIDAK diubah strukturnya selain itu, TIDAK",
+  "-- dihapus, dan data pengguna yang sudah ada TIDAK disentuh. Tidak ada",
+  "-- baris data yang disisipkan oleh file ini — pemilik menambahkan",
+  "-- marketing lewat aplikasi, setelah file ini jalan.",
+  "--",
+  "-- TEMUAN KOLOM (diperiksa dari berkas SQL aplikasi sebelum file ini",
+  "-- ditulis — TIDAK ADA kolom yang diasumsikan):",
+  "--   * profiles:        id uuid, nama_usaha, no_hp, kode_marketing,",
+  "--     created_at timestamptz default now(). Dipakai: kode_marketing",
+  "--     untuk hitungan, created_at untuk \"baru 7/30 hari\", id untuk",
+  "--     gabung ke auth.users (email) dan umkm_data (kota).",
+  "--   * umkm_data:       user_id uuid, data jsonb, updated_at SAJA",
+  "--     (tanpa created_at). Kota UMKM dibaca dari",
+  "--     data -> 'inputs' ->> 'inKota'.",
+  "--   * investor_profil: id uuid, nama, lembaga, fokus_sektor text[],",
+  "--     fokus_provinsi text[], dibuat_pada timestamptz default now().",
+  "--     TIDAK punya kolom email dan TIDAK punya created_at — email",
+  "--     diambil dari auth.users lewat id, waktu daftar dari dibuat_pada.",
+  "--     TIDAK punya kolom kota — daftar pengguna mengembalikan null",
+  "--     untuk kota pada baris Investor.",
+  "--   * akses_pemda:     email text, peran, provinsi, kota, aktif,",
+  "--     dibuat_pada timestamptz default now(). Punya dibuat_pada",
+  "--     (BUKAN created_at) dan punya kolom kota langsung.",
+  "--   * auth.users:      email varchar(255), created_at. Setiap email",
+  "--     yang dikembalikan RPC di-cast ke ::text, karena auth.users.email",
+  "--     adalah varchar(255) — ketidakcocokan inilah yang pernah membuat",
+  "--     RPC pengguna_admin gagal dengan error 42804.",
+  "-- ============================================================================",
+  "",
+  "-- ============================================================================",
+  "-- 1. TABEL akses_marketing — siapa saja marketing yang boleh masuk",
+  "-- ============================================================================",
+  "-- Satu baris = satu penugasan kode ke satu orang. Satu orang boleh",
+  "-- memegang lebih dari satu kode (satu baris per kode). Pemilik aplikasi",
+  "-- menambahkan marketing lewat aplikasi, setelah file ini jalan.",
+  "create table if not exists public.akses_marketing (",
+  "  email text not null,",
+  "  kode_marketing text not null,",
+  "  nama text,",
+  "  aktif boolean not null default true,",
+  "  dibuat_pada timestamptz not null default now(),",
+  "  primary key (email, kode_marketing)",
+  ");",
+  "comment on table public.akses_marketing is 'Daftar marketing yang diizinkan masuk Dashboard Marketing, beserta kode marketing yang dikawal tiap orang. Satu baris = satu penugasan kode.';",
+  "comment on column public.akses_marketing.kode_marketing is 'Kode marketing yang dikawal orang ini (harus ada di tabel marketing_kode).';",
+  "",
+  "alter table public.akses_marketing enable row level security;",
+  "",
+  "-- Membaca: setiap orang boleh membaca baris penugasannya sendiri.",
+  "drop policy if exists \"akses marketing baca sendiri\" on public.akses_marketing;",
+  "create policy \"akses marketing baca sendiri\" on public.akses_marketing",
+  "  for select using (auth.jwt() ->> 'email' = email);",
+  "",
+  "-- Pemilik aplikasi boleh membaca, menambah, mengubah, dan menghapus",
+  "-- semua baris (dipakai layar \"Semua marketing\" untuk menambah marketing",
+  "-- dan mengaktifkan / menonaktifkan penugasan).",
+  "drop policy if exists \"akses marketing pemilik semua\" on public.akses_marketing;",
+  "create policy \"akses marketing pemilik semua\" on public.akses_marketing",
+  "  for all",
+  "  using (auth.jwt() ->> 'email' = 'soegianto@fst.unair.ac.id')",
+  "  with check (auth.jwt() ->> 'email' = 'soegianto@fst.unair.ac.id');",
+  "",
+  "-- ============================================================================",
+  "-- 2. KOLOM kode_marketing PADA investor_profil DAN akses_pemda",
+  "-- ============================================================================",
+  "-- Investor mengisi kode marketing di formulir profilnya (opsional);",
+  "-- pengguna Pemda mengisi kode marketing saat mendaftar (opsional, lalu",
+  "-- ditulis ke barisnya sendiri di akses_pemda — lihat kebijakan di",
+  "-- bawah). Pengguna UMKM sudah mengisi kode lewat aplikasi utama",
+  "-- (profiles.kode_marketing, dari sql-marketing.sql).",
+  "alter table public.investor_profil add column if not exists kode_marketing text;",
+  "alter table public.akses_pemda add column if not exists kode_marketing text;",
+  "comment on column public.investor_profil.kode_marketing is 'Kode marketing yang dipakai investor saat mendaftar (opsional). Diisi aplikasi investor.';",
+  "comment on column public.akses_pemda.kode_marketing is 'Kode marketing yang dipakai pengguna Pemda saat mendaftar (opsional). Ditulis aplikasi Pemda ke baris pengguna itu sendiri, hanya bila masih kosong.';",
+  "",
+  "-- Pengguna Pemda boleh mengisi kode marketing pada barisnya SENDIRI,",
+  "-- hanya bila kolom itu MASIH KOSONG (sekali isi, tidak bisa diganti",
+  "-- dari aplikasi). Pemilik tetap bisa mengubah lewat kebijakan",
+  "-- \"akses pemda pemilik semua\" yang sudah ada.",
+  "drop policy if exists \"akses pemda isi kode marketing\" on public.akses_pemda;",
+  "create policy \"akses pemda isi kode marketing\" on public.akses_pemda",
+  "  for update to authenticated",
+  "  using (auth.jwt() ->> 'email' = email and kode_marketing is null)",
+  "  with check (auth.jwt() ->> 'email' = email);",
+  "",
+  "-- ============================================================================",
+  "-- 3. PEMERIKSA IZIN — dipakai di awal setiap RPC di bawah",
+  "-- ============================================================================",
+  "-- Benar bila pemanggil adalah pemilik aplikasi ATAU ada di",
+  "-- akses_marketing dengan aktif = true. Security definer supaya bisa",
+  "-- membaca akses_marketing walau RLS membatasi pembacaan langsung.",
+  "create or replace function public.adalah_marketing()",
+  "returns boolean",
+  "language sql security definer stable set search_path = public as $$",
+  "  select (auth.jwt() ->> 'email' = 'soegianto@fst.unair.ac.id')",
+  "      or exists (",
+  "        select 1 from public.akses_marketing a",
+  "        where a.email = auth.jwt() ->> 'email' and a.aktif",
+  "      )",
+  "$$;",
+  "comment on function public.adalah_marketing() is 'Benar bila pemanggil adalah pemilik aplikasi atau terdaftar aktif di akses_marketing. Dipakai di awal setiap RPC marketing.';",
+  "",
+  "-- Berhenti dengan pesan bila pemanggil bukan marketing. Setiap RPC",
+  "-- marketing memanggil fungsi ini dulu; pemanggil yang bukan marketing",
+  "-- mendapat error (bukan data kosong yang bisa disalahartikan sebagai",
+  "-- \"belum ada pengguna\").",
+  "create or replace function public.periksa_marketing()",
+  "returns void",
+  "language plpgsql security definer set search_path = public as $$",
+  "begin",
+  "  if not public.adalah_marketing() then",
+  "    raise exception 'Hanya pengguna yang terdaftar sebagai marketing yang boleh melihat data ini.';",
+  "  end if;",
+  "end;",
+  "$$;",
+  "comment on function public.periksa_marketing() is 'Berhenti dengan pesan bila pemanggil bukan marketing. Dipanggil di awal setiap RPC marketing.';",
+  "",
+  "revoke execute on function public.adalah_marketing() from public;",
+  "grant execute on function public.adalah_marketing() to authenticated;",
+  "revoke execute on function public.periksa_marketing() from public;",
+  "grant execute on function public.periksa_marketing() to authenticated;",
+  "",
+  "-- ============================================================================",
+  "-- 4. RPC ringkasan_marketing() — kartu angka ringkasan (satu objek JSON)",
+  "-- ============================================================================",
+  "-- Mengembalikan satu objek JSON:",
+  "--   umkm     : jumlah pengguna UMKM (profiles) dengan kode milik pemanggil",
+  "--   pemda    : jumlah pengguna Pemda (akses_pemda) dengan kode milik pemanggil",
+  "--   investor : jumlah investor (investor_profil) dengan kode milik pemanggil",
+  "--   total    : umkm + pemda + investor",
+  "--   per_kode : [{kode, umkm, pemda, investor}] — satu entri per kode",
+  "--     milik pemanggil (pemilik: semua kode yang punya rujukan atau",
+  "--     penugasan); kode tanpa rujukan tetap tampil dengan angka 0.",
+  "--   baru_7h  : pengguna rujukan yang daftar dalam 7 hari terakhir",
+  "--   baru_30h : pengguna rujukan yang daftar dalam 30 hari terakhir",
+  "-- Waktu daftar yang dipakai (yang memang ada di skema):",
+  "--   UMKM     <- profiles.created_at",
+  "--   Pemda    <- akses_pemda.dibuat_pada",
+  "--   Investor <- investor_profil.dibuat_pada",
+  "-- Hanya marketing; pemilik melihat semua kode. Tidak ada angka",
+  "-- keuangan, rincian transaksi, atau lokasi di hasil ini.",
+  "create or replace function public.ringkasan_marketing()",
+  "returns jsonb",
+  "language plpgsql security definer set search_path = public as $$",
+  "declare",
+  "  v_email text := auth.jwt() ->> 'email';",
+  "  v_pemilik boolean := (v_email = 'soegianto@fst.unair.ac.id');",
+  "  v_kode text[];",
+  "  v_umkm bigint;",
+  "  v_pemda bigint;",
+  "  v_investor bigint;",
+  "  v_baru_7h bigint;",
+  "  v_baru_30h bigint;",
+  "  v_per_kode jsonb;",
+  "begin",
+  "  perform public.periksa_marketing();",
+  "",
+  "  -- Kode yang boleh dilihat pemanggil. Pemilik: semua kode yang pernah",
+  "  -- dipakai sebagai rujukan, ditambah semua kode yang ditugaskan ke",
+  "  -- marketing (agar kode tanpa rujukan pun tampil dengan angka 0).",
+  "  -- Marketing: kode aktif yang ditugaskan kepadanya saja.",
+  "  if v_pemilik then",
+  "    select coalesce(array_agg(distinct kode), '{}'::text[]) into v_kode",
+  "    from (",
+  "      select kode_marketing as kode from public.akses_marketing",
+  "      union",
+  "      select kode_marketing from public.profiles",
+  "        where kode_marketing is not null and kode_marketing <> ''",
+  "      union",
+  "      select kode_marketing from public.akses_pemda",
+  "        where kode_marketing is not null and kode_marketing <> ''",
+  "      union",
+  "      select kode_marketing from public.investor_profil",
+  "        where kode_marketing is not null and kode_marketing <> ''",
+  "    ) s;",
+  "  else",
+  "    select coalesce(array_agg(kode_marketing), '{}'::text[]) into v_kode",
+  "    from public.akses_marketing",
+  "    where email = v_email and aktif;",
+  "  end if;",
+  "",
+  "  select count(*) into v_umkm",
+  "  from public.profiles p",
+  "  where p.kode_marketing = any(v_kode);",
+  "",
+  "  select count(*) into v_pemda",
+  "  from public.akses_pemda a",
+  "  where a.kode_marketing = any(v_kode);",
+  "",
+  "  select count(*) into v_investor",
+  "  from public.investor_profil i",
+  "  where i.kode_marketing = any(v_kode);",
+  "",
+  "  select coalesce(",
+  "    jsonb_agg(",
+  "      jsonb_build_object(",
+  "        'kode', c.kode,",
+  "        'umkm', (select count(*) from public.profiles p where p.kode_marketing = c.kode),",
+  "        'pemda', (select count(*) from public.akses_pemda a where a.kode_marketing = c.kode),",
+  "        'investor', (select count(*) from public.investor_profil i where i.kode_marketing = c.kode)",
+  "      ) order by c.kode",
+  "    ),",
+  "    '[]'::jsonb",
+  "  ) into v_per_kode",
+  "  from unnest(v_kode) as c(kode);",
+  "",
+  "  select",
+  "    (select count(*) from public.profiles p",
+  "       where p.kode_marketing = any(v_kode) and p.created_at >= now() - interval '7 days')",
+  "    + (select count(*) from public.akses_pemda a",
+  "       where a.kode_marketing = any(v_kode) and a.dibuat_pada >= now() - interval '7 days')",
+  "    + (select count(*) from public.investor_profil i",
+  "       where i.kode_marketing = any(v_kode) and i.dibuat_pada >= now() - interval '7 days')",
+  "    into v_baru_7h;",
+  "",
+  "  select",
+  "    (select count(*) from public.profiles p",
+  "       where p.kode_marketing = any(v_kode) and p.created_at >= now() - interval '30 days')",
+  "    + (select count(*) from public.akses_pemda a",
+  "       where a.kode_marketing = any(v_kode) and a.dibuat_pada >= now() - interval '30 days')",
+  "    + (select count(*) from public.investor_profil i",
+  "       where i.kode_marketing = any(v_kode) and i.dibuat_pada >= now() - interval '30 days')",
+  "    into v_baru_30h;",
+  "",
+  "  return jsonb_build_object(",
+  "    'umkm', v_umkm,",
+  "    'pemda', v_pemda,",
+  "    'investor', v_investor,",
+  "    'total', v_umkm + v_pemda + v_investor,",
+  "    'per_kode', v_per_kode,",
+  "    'baru_7h', v_baru_7h,",
+  "    'baru_30h', v_baru_30h",
+  "  );",
+  "end;",
+  "$$;",
+  "comment on function public.ringkasan_marketing() is 'Kartu angka Dashboard Marketing: jumlah pengguna UMKM, Pemda, dan investor yang mendaftar lewat kode milik pemanggil, rincian per kode, dan pengguna baru 7/30 hari. Hanya marketing; pemilik melihat semua kode. Tanpa angka keuangan.';",
+  "",
+  "revoke execute on function public.ringkasan_marketing() from public;",
+  "grant execute on function public.ringkasan_marketing() to authenticated;",
+  "",
+  "-- ============================================================================",
+  "-- 5. RPC daftar_marketing(p_batas int, p_offset int) — pengguna yang dikawal",
+  "-- ============================================================================",
+  "-- Mengembalikan satu baris per pengguna yang mendaftar lewat kode milik",
+  "-- pemanggil (paling baru daftar dulu):",
+  "--   email      : email akun (auth.users.email untuk UMKM dan Investor;",
+  "--     akses_pemda.email untuk Pemda) — selalu di-cast ke ::text.",
+  "--   jenis      : 'UMKM' | 'Pemda' | 'Investor'",
+  "--   kota       : UMKM  <- umkm_data.data -> 'inputs' ->> 'inKota'",
+  "--                (null bila usaha belum mengisi data atau kotanya kosong)",
+  "--                Pemda <- akses_pemda.kota",
+  "--                Investor <- null (investor_profil tidak punya kolom",
+  "--                kota; hanya fokus_provinsi sebagai array)",
+  "--   dibuat_pada: UMKM     <- profiles.created_at",
+  "--                Pemda    <- akses_pemda.dibuat_pada",
+  "--                Investor <- investor_profil.dibuat_pada",
+  "-- Hanya marketing; pemilik melihat semua pengguna semua kode. Hasil",
+  "-- dibatasi p_batas baris (maks 50) mulai p_offset. Tidak ada data",
+  "-- keuangan — hanya email, jenis, kota, dan tanggal daftar.",
+  "create or replace function public.daftar_marketing(p_batas int, p_offset int)",
+  "returns table(email text, jenis text, kota text, dibuat_pada timestamptz)",
+  "language plpgsql security definer set search_path = public as $$",
+  "declare",
+  "  v_email text := auth.jwt() ->> 'email';",
+  "  v_pemilik boolean := (v_email = 'soegianto@fst.unair.ac.id');",
+  "  v_kode text[];",
+  "  v_batas int := least(greatest(coalesce(p_batas, 50), 1), 50);",
+  "  v_offset int := greatest(coalesce(p_offset, 0), 0);",
+  "begin",
+  "  perform public.periksa_marketing();",
+  "",
+  "  if v_pemilik then",
+  "    select coalesce(array_agg(distinct kode), '{}'::text[]) into v_kode",
+  "    from (",
+  "      select kode_marketing as kode from public.akses_marketing",
+  "      union",
+  "      select kode_marketing from public.profiles",
+  "        where kode_marketing is not null and kode_marketing <> ''",
+  "      union",
+  "      select kode_marketing from public.akses_pemda",
+  "        where kode_marketing is not null and kode_marketing <> ''",
+  "      union",
+  "      select kode_marketing from public.investor_profil",
+  "        where kode_marketing is not null and kode_marketing <> ''",
+  "    ) s;",
+  "  else",
+  "    select coalesce(array_agg(kode_marketing), '{}'::text[]) into v_kode",
+  "    from public.akses_marketing",
+  "    where email = v_email and aktif;",
+  "  end if;",
+  "",
+  "  return query",
+  "  select u.email, u.jenis, u.kota, u.dibuat_pada",
+  "  from (",
+  "    select au.email::text as email,",
+  "      'UMKM'::text as jenis,",
+  "      nullif(ud.data -> 'inputs' ->> 'inKota', '')::text as kota,",
+  "      p.created_at as dibuat_pada",
+  "    from public.profiles p",
+  "    join auth.users au on au.id = p.id",
+  "    left join public.umkm_data ud on ud.user_id = p.id",
+  "    where p.kode_marketing = any(v_kode)",
+  "    union all",
+  "    select a.email::text as email,",
+  "      'Pemda'::text as jenis,",
+  "      a.kota::text as kota,",
+  "      a.dibuat_pada as dibuat_pada",
+  "    from public.akses_pemda a",
+  "    where a.kode_marketing = any(v_kode)",
+  "    union all",
+  "    select au.email::text as email,",
+  "      'Investor'::text as jenis,",
+  "      null::text as kota,",
+  "      i.dibuat_pada as dibuat_pada",
+  "    from public.investor_profil i",
+  "    join auth.users au on au.id = i.id",
+  "    where i.kode_marketing = any(v_kode)",
+  "  ) u",
+  "  order by u.dibuat_pada desc nulls last",
+  "  limit v_batas offset v_offset;",
+  "end;",
+  "$$;",
+  "comment on function public.daftar_marketing(integer, integer) is 'Daftar pengguna yang mendaftar lewat kode marketing milik pemanggil: email, jenis (UMKM/Pemda/Investor), kota bila ada, tanggal daftar. Hanya marketing; pemilik melihat semua. Tanpa data keuangan. Maks 50 baris per halaman.';",
+  "",
+  "revoke execute on function public.daftar_marketing(integer, integer) from public;",
+  "grant execute on function public.daftar_marketing(integer, integer) to authenticated;",
+  "",
+  "-- ============================================================================",
+  "-- PENUTUP — DAFTAR VERIFIKASI SETELAH KLIK RUN",
+  "-- ============================================================================",
+  "-- Jalankan pemeriksaan berikut di SQL Editor yang sama (satu per satu):",
+  "--",
+  "-- 1. Tabel akses_marketing masih kosong (pemilik menambahkan marketing",
+  "--    lewat aplikasi, setelah file ini jalan):",
+  "--      select * from public.akses_marketing;",
+  "--    Harus mengembalikan 0 baris.",
+  "--",
+  "-- 2. Kedua RPC bisa dipanggil pemilik (hasil awal boleh 0 — data nyata",
+  "--    baru muncul setelah ada pengguna yang mendaftar lewat kode):",
+  "--      select public.ringkasan_marketing();",
+  "--      select * from public.daftar_marketing(5, 0);",
+  "--",
+  "-- 3. RLS aktif di akses_marketing:",
+  "--      select tablename, rowsecurity from pg_tables",
+  "--      where schemaname = 'public' and tablename = 'akses_marketing';",
+  "--    Kolom rowsecurity harus true.",
+  "--",
+  "-- 4. Pemanggil yang bukan marketing mendapat error (bukan data):",
+  "--      (masuk dengan akun lain lalu) select public.ringkasan_marketing();",
+  "--    Harus gagal dengan pesan \"Hanya pengguna yang terdaftar sebagai",
+  "--    marketing yang boleh melihat data ini.\"",
+  "--",
+  "-- CATATAN:",
+  "-- - Menambah marketing (oleh pemilik, lewat layar \"Semua marketing\"",
+  "--   di aplikasi — atau lewat SQL bila perlu):",
+  "--      insert into public.marketing_kode (kode, nama, aktif)",
+  "--      values ('UMKM30', 'Nama Marketing', true)",
+  "--      on conflict (kode) do nothing;",
+  "--      insert into public.akses_marketing (email, kode_marketing, nama, aktif)",
+  "--      values ('marketing@contoh.id', 'UMKM30', 'Nama Marketing', true);",
+  "--   Bila kode belum ada di marketing_kode, baris pertama wajib",
+  "--   dijalankan dulu — kalau tidak, pengguna baru yang memakai kode itu",
+  "--   ditolak saat daftar (cek_kode_marketing hanya mengenal kode yang",
+  "--   ada di marketing_kode dan aktif).",
+  "-- - Aplikasi marketing (dashboard-marketing-umkm) HANYA memanggil",
+  "--   kedua RPC di atas + hitung_pendaftar_marketing (untuk hitungan",
+  "--   UMKM di layar pemilik) + membaca/menulis tabel akses_marketing",
+  "--   dan marketing_kode langsung sebagai pemilik. Aplikasi TIDAK",
+  "--   membaca tabel pengguna langsung — semua lewat RPC yang memeriksa",
+  "--   izin dan membatasi ke kode milik pemanggil.",
+  "-- - Sampai file ini dijalankan, aplikasi menampilkan \"Fitur ini belum",
+  "--   aktif — pengaturan cloud belum dijalankan\" beserta salinan SQL ini.",
+  "-- ============================================================================"].join("\n")
+;
+</script>
+<script>
+"use strict";
+/* ===== Util ===== */
+function el(id){ return document.getElementById(id); }
+function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function fmtBil(n){ if(n==null||isNaN(n)) return "—"; return new Intl.NumberFormat("id-ID").format(Math.round(n)); }
+function fmtTanggal(t){
+  if(!t) return "—";
+  try{
+    var d = new Date(t);
+    if(isNaN(d.getTime())) return "—";
+    return d.toLocaleDateString("id-ID", {day:"numeric", month:"short", year:"numeric"})
+      + ", " + d.toLocaleTimeString("id-ID", {hour:"2-digit", minute:"2-digit"});
+  }catch(e){ return "—"; }
+}
+function labelJenis(j){
+  return {"UMKM":"UMKM","Pemda":"Pemda","Investor":"Investor"}[j] || j || "—";
+}
+function kodeBersih(k){ return String(k||"").trim().toUpperCase().replace(/[^A-Z0-9]/g,""); }
+
+/* ===== State & client ===== */
+var S = { user:null, email:null, peran:null, layar:"ringkasan",
+  kodeSaya:[], penggunaOffset:0, penggunaHabis:false, contohAktif:{},
+  ringkasanTerakhir:null };
+var __client = null;
+function getClient(){
+  if(__client) return __client;
+  if(window.supabase && window.supabase.createClient){
+    try{ __client = window.supabase.createClient(CLOUD_URL, CLOUD_ANON); }catch(e){ __client = null; }
+  }
+  return __client;
+}
+
+/* ===== Popup ramah ===== */
+function tampilPopup(judul, isi){
+  el("popupJudul").textContent = judul;
+  el("popupIsi").textContent = isi;
+  el("popupOverlay").classList.add("show");
+}
+function tutupPopup(){ el("popupOverlay").classList.remove("show"); }
+function pesanRamah(err){
+  var m = String((err && err.message) || err || "");
+  if(/hanya pengguna yang terdaftar sebagai marketing/i.test(m)) return "Dashboard ini hanya untuk marketing yang terdaftar.\nHubungi pemilik aplikasi bila Anda merasa seharusnya bisa masuk.";
+  if(/invalid login credentials|invalid email|invalid password/i.test(m)) return "Email atau kata sandi tidak cocok.\nPeriksa lagi ketikan Anda, lalu coba masuk kembali.";
+  if(/email not confirmed|not confirmed/i.test(m)) return "Email Anda belum dikonfirmasi.\nBuka email Anda dan ketuk tautan konfirmasi yang kami kirim, lalu masuk kembali.";
+  if(/too many requests|rate limit|email rate limit/i.test(m)) return "Terlalu banyak percobaan barusan.\nTunggu sebentar, lalu coba lagi.";
+  if(/network|failed to fetch|load failed/i.test(m)) return "Tidak bisa terhubung ke cloud.\nPeriksa koneksi internet Anda, lalu coba lagi.";
+  if(/user already registered|already registered/i.test(m)) return "Email ini sudah terdaftar.\nSilakan masuk, atau pakai \"Lupa kata sandi?\" bila Anda lupa kata sandinya.";
+  if(/password should be at least/i.test(m)) return "Kata sandi terlalu pendek.\nBuat kata sandi minimal 6 karakter.";
+  return "Terjadi kendala saat memproses permintaan Anda.\nCoba lagi sebentar lagi. Bila masih gagal, hubungi pemilik aplikasi.";
+}
+function apakahErrorSetup(err){
+  var m = String((err && err.message) || err || "") + " " + String((err && err.code) || "");
+  return /does not exist|relation .* does not|function .* does not|42P01|42883|PGRST202|table .* not found|column .* does not exist/i.test(m);
+}
+
+/* ===== Data contoh (jalur terpisah dari data nyata; selalu berlabel) ===== */
+var CONTOH = {
+  ringkasan: { umkm:42, pemda:6, investor:3, total:51, baru_7h:4, baru_30h:11,
+    per_kode:[{kode:"UMKM30", umkm:32, pemda:5, investor:2},{kode:"TIM-A", umkm:10, pemda:1, investor:1}] },
+  pengguna: [
+    {email:"contoh-usaha-a@contoh.id", jenis:"UMKM", kota:"Kota Surabaya", dibuat_pada:"2026-11-10T09:12:00+07:00"},
+    {email:"contoh-dinas@contoh.go.id", jenis:"Pemda", kota:"Kota Surabaya", dibuat_pada:"2026-11-08T14:20:00+07:00"},
+    {email:"contoh-investor@contoh.id", jenis:"Investor", kota:null, dibuat_pada:"2026-11-05T11:05:00+07:00"}
+  ],
+  kode: ["UMKM30", "TIM-A"],
+  semua: [
+    {nama:"Contoh Marketing A", email:"contoh-a@contoh.id", kode:"UMKM30", aktif:true, umkm:32, pemda:5, investor:2},
+    {nama:"Contoh Marketing B", email:"contoh-b@contoh.id", kode:"TIM-A", aktif:true, umkm:10, pemda:1, investor:1},
+    {nama:"Contoh Marketing C", email:"contoh-c@contoh.id", kode:"TIM-B", aktif:false, umkm:0, pemda:0, investor:0}
+  ]
+};
+function spandukContoh(){ return '<div class="spanduk-contoh">Data contoh — angka ilustratif, bukan data nyata</div>'; }
+function tombolContohHtml(layar){ return '<div class="belum-cukup"><p>Belum ada data untuk bagian ini.</p><p class="muted" style="margin-top:6px">Bagian ini terisi setelah ada pengguna yang mendaftar lewat kode marketing Anda.</p><p style="margin-top:12px"><button type="button" class="ghost kecil" data-contoh="'+layar+'">Lihat contoh</button></p></div>'; }
+function pesanSetupHtml(){ return '<div class="warn-box"><p><strong>Fitur ini belum aktif — pengaturan cloud belum dijalankan.</strong></p><p style="margin-top:6px">Data pemantauan belum bisa ditampilkan karena pengaturan cloud untuk dashboard ini belum dijalankan. Salinan pengaturannya ada di bagian atas dashboard ini. Sementara itu, Anda tetap bisa melihat tampilan contoh di bawah ini.</p></div>'; }
+function tampilkanKotakSetup(){
+  var box = el("kotakSetup");
+  if(!box) return;
+  var ta = el("sqlText");
+  if(ta && !ta.value) ta.value = SQL_TEXT;
+  box.classList.remove("hidden");
+}
+function salinSql(){
+  var ta = el("sqlText");
+  if(!ta) return false;
+  ta.value = SQL_TEXT;
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(SQL_TEXT).then(function(){
+        tampilPopup("SQL tersalin","SQL pengaturan sudah tersalin.\nTempel di SQL Editor cloud lalu klik Run.");
+      }, function(){ tampilPopup("Salin manual","Tandai seluruh teks SQL, salin, lalu tempel di SQL Editor cloud."); });
+      return true;
+    }
+  }catch(e){}
+  try{ ta.select(); if(document.execCommand) document.execCommand("copy"); }catch(e){}
+  tampilPopup("SQL tersalin","SQL pengaturan sudah tersalin.\nTempel di SQL Editor cloud lalu klik Run.");
+  return true;
+}
+
+/* ===== Auth ===== */
+async function masuk(email, sandi){
+  email = String(email||"").trim(); sandi = String(sandi||"");
+  if(!email || !sandi){ tampilPopup("Belum lengkap","Isi email dan kata sandi Anda, lalu coba lagi."); return {ok:false}; }
+  var c = getClient();
+  if(!c){ tampilPopup("Fitur ini belum aktif","Fitur ini belum aktif — pengaturan cloud belum dijalankan. Coba lagi nanti."); return {ok:false, setup:true}; }
+  var r;
+  try{ r = await c.auth.signInWithPassword({email:email, password:sandi}); }
+  catch(e){ tampilPopup("Tidak bisa masuk", pesanRamah(e)); return {ok:false}; }
+  if(r.error){ tampilPopup("Tidak bisa masuk", pesanRamah(r.error)); return {ok:false, error:r.error}; }
+  return await sesudahMasuk(r.data && r.data.user);
+}
+async function sesudahMasuk(u){
+  if(!u || !u.email){ tampilPopup("Tidak bisa masuk","Sesi masuk tidak lengkap. Coba masuk lagi."); return {ok:false}; }
+  var email = String(u.email).toLowerCase();
+  var akses = await periksaAkses(email);
+  if(!akses.ok){
+    var c = getClient();
+    if(c && c.auth && c.auth.signOut){ try{ await c.auth.signOut(); }catch(e){} }
+    if(akses.alasan === "setup"){
+      tampilPopup("Fitur ini belum aktif","Fitur ini belum aktif — pengaturan cloud belum dijalankan. Silakan hubungi pemilik aplikasi.");
+    }else{
+      tampilPopup("Belum terdaftar","Akun ini belum terdaftar sebagai marketing — hubungi pemilik aplikasi.");
+    }
+    return {ok:false, ditolak:true, alasan:akses.alasan};
+  }
+  S.user = u; S.email = email; S.peran = akses.peran;
+  S.kodeSaya = akses.kode || [];
+  tampilDashboard();
+  await muatLayarAktif();
+  return {ok:true, peran:akses.peran};
+}
+async function periksaAkses(email){
+  /* Pemilik aplikasi selalu lolos sebagai peran pemilik — sama seperti
+     pola dashboard Pemda dan Admin. */
+  if(email === EMAIL_PEMILIK) return {ok:true, peran:"pemilik", kode:[]};
+  var c = getClient();
+  if(!c) return {ok:false, alasan:"setup"};
+  var r;
+  try{ r = await c.from("akses_marketing").select("email,kode_marketing,nama,aktif").eq("email", email); }
+  catch(e){ return {ok:false, alasan:"setup", error:e}; }
+  if(r.error){
+    if(apakahErrorSetup(r.error)) return {ok:false, alasan:"setup", error:r.error};
+    return {ok:false, alasan:"setup", error:r.error};
+  }
+  var rows = Array.isArray(r.data) ? r.data.filter(function(x){ return x && x.aktif === true; }) : [];
+  if(!rows.length) return {ok:false, alasan:"tidak-terdaftar"};
+  return {ok:true, peran:"marketing", kode: rows.map(function(x){ return {kode:x.kode_marketing, nama:x.nama || ""}; })};
+}
+async function daftar(email, sandi){
+  email = String(email||"").trim(); sandi = String(sandi||"");
+  if(!email || !sandi){ tampilPopup("Belum lengkap","Isi email dan kata sandi, lalu coba lagi."); return {ok:false}; }
+  if(sandi.length < 6){ tampilPopup("Kata sandi terlalu pendek","Buat kata sandi minimal 6 karakter."); return {ok:false}; }
+  var c = getClient();
+  if(!c){ tampilPopup("Fitur ini belum aktif","Fitur ini belum aktif — pengaturan cloud belum dijalankan. Coba lagi nanti."); return {ok:false, setup:true}; }
+  var r;
+  try{ r = await c.auth.signUp({email:email, password:sandi, options:{emailRedirectTo: MARKETING_URL}}); }
+  catch(e){ tampilPopup("Tidak bisa mendaftar", pesanRamah(e)); return {ok:false}; }
+  if(r.error){ tampilPopup("Tidak bisa mendaftar", pesanRamah(r.error)); return {ok:false, error:r.error}; }
+  tampilPopup("Periksa email Anda","Kami sudah mengirim tautan konfirmasi ke email Anda.\nBuka email itu dan ketuk tautannya, lalu masuk di sini.");
+  return {ok:true};
+}
+async function lupaSandi(email){
+  email = String(email||"").trim();
+  if(!email){ tampilPopup("Belum lengkap","Isi email akun Anda, lalu coba lagi."); return {ok:false}; }
+  var c = getClient();
+  if(!c){ tampilPopup("Fitur ini belum aktif","Fitur ini belum aktif — pengaturan cloud belum dijalankan. Coba lagi nanti."); return {ok:false, setup:true}; }
+  var r;
+  try{ r = await c.auth.resetPasswordForEmail(email, {redirectTo: MARKETING_URL}); }
+  catch(e){ tampilPopup("Tidak bisa mengirim tautan", pesanRamah(e)); return {ok:false}; }
+  if(r.error){ tampilPopup("Tidak bisa mengirim tautan", pesanRamah(r.error)); return {ok:false, error:r.error}; }
+  tampilPopup("Tautan dikirim","Bila email itu terdaftar, tautan untuk membuat kata sandi baru sudah kami kirim.\nBuka email Anda dan ketuk tautannya.");
+  return {ok:true};
+}
+async function simpanSandiBaru(a, b){
+  a = String(a||""); b = String(b||"");
+  if(a.length < 6){ tampilPopup("Kata sandi terlalu pendek","Buat kata sandi minimal 6 karakter."); return {ok:false}; }
+  if(a !== b){ tampilPopup("Kata sandi tidak sama","Ketik ulang kata sandi baru sama persis dengan yang pertama."); return {ok:false}; }
+  var c = getClient();
+  if(!c){ tampilPopup("Fitur ini belum aktif","Fitur ini belum aktif — pengaturan cloud belum dijalankan. Coba lagi nanti."); return {ok:false, setup:true}; }
+  var r;
+  try{ r = await c.auth.updateUser({password:a}); }
+  catch(e){ tampilPopup("Belum bisa menyimpan", pesanRamah(e)); return {ok:false}; }
+  if(r.error){ tampilPopup("Belum bisa menyimpan", pesanRamah(r.error)); return {ok:false, error:r.error}; }
+  tampilPopup("Kata sandi baru tersimpan","Kata sandi Anda sudah diganti. Silakan masuk dengan kata sandi baru.");
+  tampilPanel("panelMasuk");
+  return {ok:true};
+}
+async function keluar(){
+  var c = getClient();
+  if(c && c.auth && c.auth.signOut){ try{ await c.auth.signOut(); }catch(e){} }
+  S.user = null; S.email = null; S.peran = null;
+  S.kodeSaya = []; S.penggunaOffset = 0; S.penggunaHabis = false;
+  S.ringkasanTerakhir = null;
+  el("layarDashboard").classList.add("hidden");
+  el("layarMasuk").classList.remove("hidden");
+  tampilPanel("panelMasuk");
+}
+
+/* ===== Ambil data lewat RPC (semua RPC memeriksa izin di cloud) ===== */
+async function panggilRpc(nama, arg){
+  var c = getClient();
+  if(!c) return {ok:false, setup:true};
+  var r;
+  try{ r = await c.rpc(nama, arg || {}); }
+  catch(e){
+    if(apakahErrorSetup(e)) return {ok:false, setup:true, error:e};
+    return {ok:false, error:e};
+  }
+  if(r.error){
+    if(apakahErrorSetup(r.error)) return {ok:false, setup:true, error:r.error};
+    return {ok:false, error:r.error};
+  }
+  var d = r.data;
+  if(Array.isArray(d)) d = d[0] || null;
+  return {ok:true, data:d};
+}
+async function panggilRpcTabel(nama, arg){
+  var c = getClient();
+  if(!c) return {ok:false, setup:true};
+  var r;
+  try{ r = await c.rpc(nama, arg || {}); }
+  catch(e){
+    if(apakahErrorSetup(e)) return {ok:false, setup:true, error:e};
+    return {ok:false, error:e};
+  }
+  if(r.error){
+    if(apakahErrorSetup(r.error)) return {ok:false, setup:true, error:r.error};
+    return {ok:false, error:r.error};
+  }
+  return {ok:true, data: Array.isArray(r.data) ? r.data : []};
+}
+
+/* ===== Navigasi layar ===== */
+function tampilLayar(nama){
+  S.layar = nama;
+  var btns = document.querySelectorAll("#tabbar button");
+  btns.forEach(function(b){ b.classList.toggle("aktif", b.getAttribute("data-layar") === nama); });
+  ["ringkasan","pengguna","kode","semua"].forEach(function(l){
+    el("layar" + l.charAt(0).toUpperCase() + l.slice(1)).classList.toggle("aktif", l === nama);
+  });
+}
+function tampilPanel(id){
+  ["panelMasuk","panelDaftar","panelLupa","panelSandiBaru"].forEach(function(p){ el(p).classList.add("hidden"); });
+  el(id).classList.remove("hidden");
+}
+function tampilDashboard(){
+  el("layarMasuk").classList.add("hidden");
+  el("layarDashboard").classList.remove("hidden");
+  el("infoPeran").textContent = (S.email || "") + " — " + (S.peran === "pemilik" ? "Pemilik aplikasi" : "Marketing");
+  el("tabSemua").classList.toggle("hidden", S.peran !== "pemilik");
+  tampilLayar("ringkasan");
+}
+async function muatLayarAktif(){
+  if(S.layar === "ringkasan") return muatRingkasan();
+  if(S.layar === "pengguna") return muatPengguna(true);
+  if(S.layar === "kode") return muatKode();
+  if(S.layar === "semua") return muatSemua();
+  return {ok:false};
+}
+</script>
+<script>
+"use strict";
+/* ===== Layar 1: Ringkasan ===== */
+function htmlRingkasan(d){
+  var perKode = Array.isArray(d.per_kode) ? d.per_kode : [];
+  var html = '<div class="grid">'
+    + '<div class="stat"><div class="angka">' + fmtBil(d.umkm) + '</div><div class="lbl">Pengguna UMKM yang Anda kawal</div></div>'
+    + '<div class="stat"><div class="angka">' + fmtBil(d.pemda) + '</div><div class="lbl">Pengguna Pemda yang Anda kawal</div></div>'
+    + '<div class="stat"><div class="angka">' + fmtBil(d.investor) + '</div><div class="lbl">Investor yang Anda kawal</div></div>'
+    + '<div class="stat"><div class="angka">' + fmtBil(d.total) + '</div><div class="lbl">Total pengguna yang Anda kawal</div></div>'
+    + '<div class="stat"><div class="angka">' + fmtBil(d.baru_7h) + '</div><div class="lbl">Pengguna baru 7 hari terakhir</div></div>'
+    + '<div class="stat"><div class="angka">' + fmtBil(d.baru_30h) + '</div><div class="lbl">Pengguna baru 30 hari terakhir</div></div>'
+    + '</div>';
+  if(perKode.length){
+    html += '<h3>Per kode marketing</h3><table><thead><tr><th>Kode</th><th>UMKM</th><th>Pemda</th><th>Investor</th><th>Total</th></tr></thead><tbody>';
+    perKode.forEach(function(r){
+      var t = (Number(r.umkm)||0) + (Number(r.pemda)||0) + (Number(r.investor)||0);
+      html += '<tr><td>' + esc(r.kode) + '</td><td>' + fmtBil(r.umkm) + '</td><td>' + fmtBil(r.pemda) + '</td><td>' + fmtBil(r.investor) + '</td><td>' + fmtBil(t) + '</td></tr>';
+    });
+    html += '</tbody></table>';
+  }
+  return html;
+}
+async function muatRingkasan(){
+  var box = el("ringkasanIsi");
+  el("contohRingkasan").classList.add("hidden");
+  box.innerHTML = '<p class="muted">Memuat ringkasan…</p>';
+  var hasil = await panggilRpc("ringkasan_marketing", {});
+  if(!hasil.ok){
+    if(hasil.setup){ box.innerHTML = pesanSetupHtml() + tombolContohHtml("ringkasan"); tampilkanKotakSetup(); }
+    else { box.innerHTML = '<p class="muted">Ringkasan belum bisa dimuat.</p>'; tampilPopup("Belum bisa memuat", pesanRamah(hasil.error)); }
+    return hasil;
+  }
+  var d = hasil.data || {};
+  S.ringkasanTerakhir = d;
+  if((Number(d.total)||0) === 0 && !(Array.isArray(d.per_kode) && d.per_kode.length)){
+    box.innerHTML = tombolContohHtml("ringkasan");
+    return hasil;
+  }
+  box.innerHTML = htmlRingkasan(d);
+  return hasil;
+}
+function renderContohRingkasan(){
+  var html = spandukContoh() + '<div class="card">' + htmlRingkasan(CONTOH.ringkasan)
+    + '<p class="muted" style="margin-top:10px">Angka pada tampilan ini adalah data contoh, bukan data nyata.</p>'
+    + '<p style="margin-top:10px"><button type="button" class="ghost kecil" data-tutup-contoh="ringkasan">Tutup contoh</button></p></div>';
+  el("contohRingkasan").innerHTML = html;
+  el("contohRingkasan").classList.remove("hidden");
+}
+
+/* ===== Layar 2: Pengguna yang dikawal ===== */
+function barisPengguna(x){
+  return '<tr><td>' + esc(x.email || "—") + '</td><td>' + esc(labelJenis(x.jenis)) + '</td><td>' + esc(x.kota || "—") + '</td><td>' + fmtTanggal(x.dibuat_pada) + '</td></tr>';
+}
+function htmlPengguna(rows){
+  var html = '<table><thead><tr><th>Email</th><th>Jenis</th><th>Kota</th><th>Tanggal daftar</th></tr></thead><tbody>';
+  rows.forEach(function(x){ html += barisPengguna(x); });
+  return html + '</tbody></table>';
+}
+async function muatPengguna(dariAwal){
+  var box = el("penggunaIsi");
+  el("contohPengguna").classList.add("hidden");
+  if(dariAwal){ S.penggunaOffset = 0; S.penggunaHabis = false; box.innerHTML = '<p class="muted">Memuat daftar pengguna…</p>'; }
+  var hasil = await panggilRpcTabel("daftar_marketing", {p_batas: 50, p_offset: S.penggunaOffset});
+  if(!hasil.ok){
+    if(hasil.setup){ box.innerHTML = pesanSetupHtml() + tombolContohHtml("pengguna"); tampilkanKotakSetup(); }
+    else { box.innerHTML = '<p class="muted">Daftar pengguna belum bisa dimuat.</p>'; tampilPopup("Belum bisa memuat", pesanRamah(hasil.error)); }
+    return hasil;
+  }
+  var rows = hasil.data;
+  if(!rows.length && dariAwal){ box.innerHTML = tombolContohHtml("pengguna"); el("btnMuatLebihPengguna").classList.add("hidden"); return {ok:true, data:rows}; }
+  if(rows.length < 50){ S.penggunaHabis = true; el("btnMuatLebihPengguna").classList.add("hidden"); }
+  else { el("btnMuatLebihPengguna").classList.remove("hidden"); }
+  if(dariAwal){ box.innerHTML = htmlPengguna(rows); }
+  else {
+    var tbl = box.querySelector("tbody");
+    if(tbl){ rows.forEach(function(x){ tbl.insertAdjacentHTML("beforeend", barisPengguna(x)); }); }
+    else { box.innerHTML = htmlPengguna(rows); }
+  }
+  return {ok:true, data:rows};
+}
+function renderContohPengguna(){
+  var html = spandukContoh() + '<div class="card">' + htmlPengguna(CONTOH.pengguna)
+    + '<p class="muted" style="margin-top:10px">Kota pada baris Investor tidak ditampilkan karena profil investor tidak menyimpan kota.</p>'
+    + '<p style="margin-top:10px"><button type="button" class="ghost kecil" data-tutup-contoh="pengguna">Tutup contoh</button></p></div>';
+  el("contohPengguna").innerHTML = html;
+  el("contohPengguna").classList.remove("hidden");
+}
+
+/* ===== Layar 3: Kode saya ===== */
+function htmlKode(kodeList){
+  if(!kodeList.length) return '<p class="muted">Anda belum memegang kode marketing. Hubungi pemilik aplikasi.</p>';
+  var html = "";
+  kodeList.forEach(function(k){
+    var kode = typeof k === "string" ? k : k.kode;
+    html += '<span class="kode-chip"><b>' + esc(kode) + '</b><button type="button" class="ghost kecil" data-salin-kode="' + esc(kode) + '">Salin</button></span>';
+  });
+  return html;
+}
+async function muatKode(){
+  var box = el("kodeIsi");
+  el("contohKode").classList.add("hidden");
+  if(S.peran !== "pemilik"){
+    box.innerHTML = htmlKode(S.kodeSaya);
+    return {ok:true};
+  }
+  /* Pemilik tidak punya penugasan di akses_marketing — tampilkan semua
+     kode yang punya rujukan (dari ringkasan). */
+  box.innerHTML = '<p class="muted">Memuat kode…</p>';
+  var hasil = await panggilRpc("ringkasan_marketing", {});
+  if(!hasil.ok){
+    if(hasil.setup){ box.innerHTML = pesanSetupHtml() + tombolContohHtml("kode"); tampilkanKotakSetup(); }
+    else { box.innerHTML = '<p class="muted">Kode belum bisa dimuat.</p>'; tampilPopup("Belum bisa memuat", pesanRamah(hasil.error)); }
+    return hasil;
+  }
+  var perKode = (hasil.data && Array.isArray(hasil.data.per_kode)) ? hasil.data.per_kode : [];
+  if(!perKode.length){
+    box.innerHTML = '<p class="muted">Belum ada kode marketing yang dipakai. Tambahkan marketing di layar "Semua marketing".</p>';
+    return hasil;
+  }
+  box.innerHTML = '<p class="muted">Sebagai pemilik, Anda melihat semua kode yang dipakai:</p>' + htmlKode(perKode.map(function(r){ return r.kode; }));
+  return hasil;
+}
+function renderContohKode(){
+  var html = spandukContoh() + '<div class="card">' + htmlKode(CONTOH.kode)
+    + '<p class="muted" style="margin-top:10px">Kode pada tampilan ini adalah data contoh, bukan kode nyata.</p>'
+    + '<p style="margin-top:10px"><button type="button" class="ghost kecil" data-tutup-contoh="kode">Tutup contoh</button></p></div>';
+  el("contohKode").innerHTML = html;
+  el("contohKode").classList.remove("hidden");
+}
+function salinKode(kode){
+  kode = String(kode || "");
+  if(!kode) return false;
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(kode).then(function(){
+        tampilPopup("Kode tersalin","Kode " + kode + " sudah tersalin.\nBagikan kode ini kepada calon pengguna.");
+      }, function(){ tampilPopup("Salin manual","Kode Anda: " + kode + "\nTandai kode itu lalu salin secara manual."); });
+      return true;
+    }
+  }catch(e){}
+  tampilPopup("Kode Anda", "Kode Anda: " + kode);
+  return true;
+}
+
+/* ===== Layar 4: Semua marketing (pemilik saja) ===== */
+function barisSemua(x){
+  var total = (Number(x.umkm)||0) + (Number(x.pemda)||0) + (Number(x.investor)||0);
+  var status = x.aktif ? "Aktif" : "Nonaktif";
+  var tombol = x.punya_tugas
+    ? '<button type="button" class="ghost kecil" data-toggle-marketing="' + esc(x.email) + '|' + esc(x.kode) + '|' + (x.aktif ? "0" : "1") + '">' + (x.aktif ? "Nonaktifkan" : "Aktifkan") + '</button>'
+    : "";
+  return '<tr><td>' + esc(x.nama || "—") + '</td><td>' + esc(x.email || "—") + '</td><td>' + esc(x.kode) + '</td><td>' + fmtBil(x.umkm) + '</td><td>' + fmtBil(x.pemda) + '</td><td>' + fmtBil(x.investor) + '</td><td>' + fmtBil(total) + '</td><td>' + esc(status) + '</td><td>' + tombol + '</td></tr>';
+}
+function htmlSemua(rows){
+  if(!rows.length) return '<p class="muted">Belum ada marketing yang terdaftar.</p>';
+  var html = '<table><thead><tr><th>Nama</th><th>Email</th><th>Kode</th><th>UMKM</th><th>Pemda</th><th>Investor</th><th>Total</th><th>Status</th><th></th></tr></thead><tbody>';
+  rows.forEach(function(x){ html += barisSemua(x); });
+  return html + '</tbody></table>';
+}
+async function muatSemua(){
+  var box = el("semuaIsi");
+  el("contohSemua").classList.add("hidden");
+  box.innerHTML = '<p class="muted">Memuat daftar marketing…</p>';
+  var c = getClient();
+  if(!c){ box.innerHTML = pesanSetupHtml() + tombolContohHtml("semua"); tampilkanKotakSetup(); return {ok:false, setup:true}; }
+  var rTugas;
+  try{ rTugas = await c.from("akses_marketing").select("email,kode_marketing,nama,aktif,dibuat_pada").order("dibuat_pada", {ascending:false}); }
+  catch(e){
+    if(apakahErrorSetup(e)){ box.innerHTML = pesanSetupHtml() + tombolContohHtml("semua"); tampilkanKotakSetup(); return {ok:false, setup:true, error:e}; }
+    box.innerHTML = '<p class="muted">Daftar marketing belum bisa dimuat.</p>'; tampilPopup("Belum bisa memuat", pesanRamah(e)); return {ok:false, error:e};
+  }
+  if(rTugas.error){
+    if(apakahErrorSetup(rTugas.error)){ box.innerHTML = pesanSetupHtml() + tombolContohHtml("semua"); tampilkanKotakSetup(); return {ok:false, setup:true, error:rTugas.error}; }
+    box.innerHTML = '<p class="muted">Daftar marketing belum bisa dimuat.</p>'; tampilPopup("Belum bisa memuat", pesanRamah(rTugas.error)); return {ok:false, error:rTugas.error};
+  }
+  /* Hitungan UMKM per kode dipakai dari hitung_pendaftar_marketing;
+     Pemda dan investor dari ringkasan_marketing (per_kode). */
+  var hUmkm = await panggilRpcTabel("hitung_pendaftar_marketing", {});
+  if(!hUmkm.ok){
+    if(hUmkm.setup){ box.innerHTML = pesanSetupHtml() + tombolContohHtml("semua"); tampilkanKotakSetup(); }
+    else { box.innerHTML = '<p class="muted">Daftar marketing belum bisa dimuat.</p>'; tampilPopup("Belum bisa memuat", pesanRamah(hUmkm.error)); }
+    return hUmkm;
+  }
+  var hRing = await panggilRpc("ringkasan_marketing", {});
+  if(!hRing.ok){
+    if(hRing.setup){ box.innerHTML = pesanSetupHtml() + tombolContohHtml("semua"); tampilkanKotakSetup(); }
+    else { box.innerHTML = '<p class="muted">Daftar marketing belum bisa dimuat.</p>'; tampilPopup("Belum bisa memuat", pesanRamah(hRing.error)); }
+    return hRing;
+  }
+  var petaUmkm = {};
+  hUmkm.data.forEach(function(r){ petaUmkm[r.kode] = Number(r.jumlah) || 0; });
+  var petaLain = {};
+  var perKode = (hRing.data && Array.isArray(hRing.data.per_kode)) ? hRing.data.per_kode : [];
+  perKode.forEach(function(r){ petaLain[r.kode] = {pemda: Number(r.pemda)||0, investor: Number(r.investor)||0}; });
+  var tugas = Array.isArray(rTugas.data) ? rTugas.data : [];
+  var rows = [];
+  var kodeSudah = {};
+  tugas.forEach(function(t){
+    var kode = t.kode_marketing;
+    kodeSudah[kode] = true;
+    rows.push({nama: t.nama || "", email: t.email, kode: kode, aktif: t.aktif === true,
+      umkm: petaUmkm[kode] || 0,
+      pemda: (petaLain[kode] && petaLain[kode].pemda) || 0,
+      investor: (petaLain[kode] && petaLain[kode].investor) || 0,
+      punya_tugas: true});
+  });
+  /* Kode yang sudah dipakai sebagai rujukan tapi belum ditugaskan ke
+     siapa pun tetap ditampilkan, supaya pemilik melihatnya. */
+  perKode.forEach(function(r){
+    if(kodeSudah[r.kode]) return;
+    var total = (Number(r.umkm)||0) + (Number(r.pemda)||0) + (Number(r.investor)||0);
+    if(total <= 0) return;
+    rows.push({nama: "", email: "", kode: r.kode, aktif: true,
+      umkm: Number(r.umkm)||0, pemda: Number(r.pemda)||0, investor: Number(r.investor)||0,
+      punya_tugas: false});
+  });
+  box.innerHTML = htmlSemua(rows);
+  return {ok:true, data:rows};
+}
+function renderContohSemua(){
+  var html = spandukContoh() + '<div class="card">' + htmlSemua(CONTOH.semua.map(function(x){
+      return {nama:x.nama, email:x.email, kode:x.kode, aktif:x.aktif, umkm:x.umkm, pemda:x.pemda, investor:x.investor, punya_tugas:true};
+    }))
+    + '<p class="muted" style="margin-top:10px">Data pada tampilan ini adalah data contoh, bukan data nyata.</p>'
+    + '<p style="margin-top:10px"><button type="button" class="ghost kecil" data-tutup-contoh="semua">Tutup contoh</button></p></div>';
+  el("contohSemua").innerHTML = html;
+  el("contohSemua").classList.remove("hidden");
+}
+function buatKodeOtomatis(){
+  var s = "";
+  for(var i = 0; i < 6; i++){ s += ALFABET_KODE.charAt(Math.floor(Math.random() * ALFABET_KODE.length)); }
+  return s;
+}
+async function tambahMarketing(nama, email, kodeInput){
+  nama = String(nama||"").trim(); email = String(email||"").trim().toLowerCase(); kodeInput = kodeBersih(kodeInput);
+  if(!nama || !email){ tampilPopup("Belum lengkap","Isi nama dan email marketing, lalu coba lagi."); return {ok:false}; }
+  if(email.indexOf("@") < 1 || email.indexOf(".") < 0){ tampilPopup("Email belum benar","Periksa lagi alamat email marketing."); return {ok:false}; }
+  var kode = kodeInput;
+  if(kode && !/^[A-Z0-9]{6}$/.test(kode)){
+    tampilPopup("Kode belum benar","Kode marketing terdiri dari 6 huruf atau angka, contoh: UMKM30.\nPeriksa lagi kodenya, atau kosongkan kolomnya bila ingin dibuat otomatis.");
+    return {ok:false};
+  }
+  var c = getClient();
+  if(!c){ tampilPopup("Fitur ini belum aktif","Fitur ini belum aktif — pengaturan cloud belum dijalankan. Coba lagi nanti."); return {ok:false, setup:true}; }
+  /* Bila kode kosong: buat otomatis dan pastikan belum dipakai. */
+  if(!kode){
+    var percobaan = 0;
+    while(percobaan < 10){
+      percobaan++;
+      var calon = buatKodeOtomatis();
+      var rCek;
+      try{ rCek = await c.from("marketing_kode").select("kode").eq("kode", calon).maybeSingle(); }
+      catch(e){ tampilPopup("Belum bisa menambah", pesanRamah(e)); return {ok:false}; }
+      if(rCek.error){
+        if(apakahErrorSetup(rCek.error)){ tampilPopup("Fitur ini belum aktif","Fitur ini belum aktif — pengaturan cloud belum dijalankan. Silakan hubungi pemilik aplikasi."); return {ok:false, setup:true}; }
+        tampilPopup("Belum bisa menambah", pesanRamah(rCek.error)); return {ok:false};
+      }
+      if(!rCek.data){ kode = calon; break; }
+    }
+    if(!kode){ tampilPopup("Belum bisa menambah","Tidak dapat membuat kode unik barusan. Coba lagi."); return {ok:false}; }
+  }else{
+    /* Kode diisi sendiri: pastikan belum dipakai orang lain sebagai kode. */
+    var rAda;
+    try{ rAda = await c.from("marketing_kode").select("kode,nama").eq("kode", kode).maybeSingle(); }
+    catch(e){ tampilPopup("Belum bisa menambah", pesanRamah(e)); return {ok:false}; }
+    if(rAda.error){
+      if(apakahErrorSetup(rAda.error)){ tampilPopup("Fitur ini belum aktif","Fitur ini belum aktif — pengaturan cloud belum dijalankan. Silakan hubungi pemilik aplikasi."); return {ok:false, setup:true}; }
+      tampilPopup("Belum bisa menambah", pesanRamah(rAda.error)); return {ok:false};
+    }
+    if(rAda.data){
+      /* Kode sudah ada (misalnya kode bersama) — tetap boleh ditugaskan
+         ke marketing ini; nama kode yang lama tetap dipakai. */
+    }else{
+      var rBuat;
+      try{ rBuat = await c.from("marketing_kode").insert({kode:kode, nama:nama, aktif:true}); }
+      catch(e){ tampilPopup("Belum bisa menambah", pesanRamah(e)); return {ok:false}; }
+      if(rBuat.error){
+        if(apakahErrorSetup(rBuat.error)){ tampilPopup("Fitur ini belum aktif","Fitur ini belum aktif — pengaturan cloud belum dijalankan. Silakan hubungi pemilik aplikasi."); return {ok:false, setup:true}; }
+        tampilPopup("Belum bisa menambah", pesanRamah(rBuat.error)); return {ok:false};
+      }
+    }
+  }
+  if(!kodeInput){
+    /* Kode otomatis selalu dibuat dulu di daftar kode marketing. */
+    var rBuat2;
+    try{ rBuat2 = await c.from("marketing_kode").insert({kode:kode, nama:nama, aktif:true}); }
+    catch(e){ tampilPopup("Belum bisa menambah", pesanRamah(e)); return {ok:false}; }
+    if(rBuat2.error){
+      if(apakahErrorSetup(rBuat2.error)){ tampilPopup("Fitur ini belum aktif","Fitur ini belum aktif — pengaturan cloud belum dijalankan. Silakan hubungi pemilik aplikasi."); return {ok:false, setup:true}; }
+      tampilPopup("Belum bisa menambah", pesanRamah(rBuat2.error)); return {ok:false};
+    }
+  }
+  var rTugas2;
+  try{ rTugas2 = await c.from("akses_marketing").insert({email:email, kode_marketing:kode, nama:nama, aktif:true}); }
+  catch(e){ tampilPopup("Belum bisa menambah", pesanRamah(e)); return {ok:false}; }
+  if(rTugas2.error){
+    if(/duplicate key|unique/i.test(String(rTugas2.error.message || ""))){
+      tampilPopup("Sudah terdaftar","Penugasan kode " + kode + " untuk email ini sudah ada.");
+      return {ok:false};
+    }
+    if(apakahErrorSetup(rTugas2.error)){ tampilPopup("Fitur ini belum aktif","Fitur ini belum aktif — pengaturan cloud belum dijalankan. Silakan hubungi pemilik aplikasi."); return {ok:false, setup:true}; }
+    tampilPopup("Belum bisa menambah", pesanRamah(rTugas2.error)); return {ok:false};
+  }
+  tampilPopup("Marketing ditambahkan", nama + " (" + email + ") kini memegang kode " + kode + ".\nBagikan kode itu kepadanya.");
+  el("mkNama").value = ""; el("mkEmail").value = ""; el("mkKode").value = "";
+  await muatSemua();
+  return {ok:true, kode:kode};
+}
+async function toggleMarketing(email, kode, aktifBaru){
+  var c = getClient();
+  if(!c){ tampilPopup("Fitur ini belum aktif","Fitur ini belum aktif — pengaturan cloud belum dijalankan. Coba lagi nanti."); return {ok:false, setup:true}; }
+  var r;
+  try{ r = await c.from("akses_marketing").update({aktif: aktifBaru}).eq("email", email).eq("kode_marketing", kode); }
+  catch(e){ tampilPopup("Belum bisa mengubah", pesanRamah(e)); return {ok:false}; }
+  if(r.error){
+    if(apakahErrorSetup(r.error)){ tampilPopup("Fitur ini belum aktif","Fitur ini belum aktif — pengaturan cloud belum dijalankan. Silakan hubungi pemilik aplikasi."); return {ok:false, setup:true}; }
+    tampilPopup("Belum bisa mengubah", pesanRamah(r.error)); return {ok:false};
+  }
+  tampilPopup(aktifBaru ? "Penugasan diaktifkan" : "Penugasan dinonaktifkan",
+    aktifBaru
+      ? "Kode " + kode + " untuk " + email + " aktif kembali."
+      : "Kode " + kode + " untuk " + email + " sudah nonaktif.\nPengguna yang sudah terdaftar lewat kode itu tetap tercatat, tapi pemilik kode tidak bisa masuk lagi.");
+  await muatSemua();
+  return {ok:true};
+}
+
+/* ===== Tampilkan contoh / tutup contoh ===== */
+var RENDER_CONTOH = {ringkasan:renderContohRingkasan, pengguna:renderContohPengguna, kode:renderContohKode, semua:renderContohSemua};
+function tampilContoh(layar){
+  S.contohAktif[layar] = true;
+  var fn = RENDER_CONTOH[layar];
+  if(fn) fn();
+}
+function tutupContoh(layar){
+  S.contohAktif[layar] = false;
+  var box = el("contoh" + layar.charAt(0).toUpperCase() + layar.slice(1));
+  if(box){ box.classList.add("hidden"); box.innerHTML = ""; }
+}
+
+/* ===== Init & event ===== */
+function hashParam(k){ try{ return new URLSearchParams(String(window.location.hash||"").replace(/^#/,"")).get(k); }catch(e){ return null; } }
+function bindEvents(){
+  el("btnPopupTutup").addEventListener("click", tutupPopup);
+  el("popupOverlay").addEventListener("click", function(e){ if(e.target === el("popupOverlay")) tutupPopup(); });
+  el("btnMasuk").addEventListener("click", async function(){ await masuk(el("emailMasuk").value, el("sandiMasuk").value); });
+  el("btnKeDaftar").addEventListener("click", function(){ tampilPanel("panelDaftar"); });
+  el("btnBatalDaftar").addEventListener("click", function(){ tampilPanel("panelMasuk"); });
+  el("btnDaftar").addEventListener("click", async function(){ await daftar(el("emailDaftar").value, el("sandiDaftar").value); });
+  el("btnKeLupa").addEventListener("click", function(){ tampilPanel("panelLupa"); });
+  el("btnBatalLupa").addEventListener("click", function(){ tampilPanel("panelMasuk"); });
+  el("btnKirimLupa").addEventListener("click", async function(){ await lupaSandi(el("emailLupa").value); });
+  el("btnSimpanSandi").addEventListener("click", async function(){ await simpanSandiBaru(el("sandiBaru").value, el("sandiBaru2").value); });
+  el("btnKeluar").addEventListener("click", keluar);
+  el("btnSalinSql").addEventListener("click", salinSql);
+  el("btnMuatLebihPengguna").addEventListener("click", async function(){
+    if(S.penggunaHabis) return;
+    S.penggunaOffset += 50;
+    await muatPengguna(false);
+  });
+  el("btnTambahMarketing").addEventListener("click", async function(){
+    await tambahMarketing(el("mkNama").value, el("mkEmail").value, el("mkKode").value);
+  });
+  document.querySelectorAll("#tabbar button").forEach(function(b){
+    b.addEventListener("click", async function(){
+      tampilLayar(b.getAttribute("data-layar"));
+      await muatLayarAktif();
+    });
+  });
+  document.addEventListener("click", function(e){
+    var t = e.target;
+    if(t && t.getAttribute){
+      var c = t.getAttribute("data-contoh");
+      if(c){ tampilContoh(c); return; }
+      var tc = t.getAttribute("data-tutup-contoh");
+      if(tc){ tutupContoh(tc); return; }
+      var sk = t.getAttribute("data-salin-kode");
+      if(sk){ salinKode(sk); return; }
+      var tg = t.getAttribute("data-toggle-marketing");
+      if(tg){
+        var bagian = tg.split("|");
+        if(bagian.length === 3){
+          toggleMarketing(bagian[0], bagian[1], bagian[2] === "1");
+        }
+        return;
+      }
+    }
+  });
+}
+async function init(){
+  bindEvents();
+  /* Tautan atur ulang kata sandi dari email membuka aplikasi ini dengan
+     hash type=recovery — tampilkan layar "Buat kata sandi baru". */
+  if(hashParam("type") === "recovery" || hashParam("error_code") || hashParam("error")){
+    tampilPanel("panelSandiBaru");
+    return;
+  }
+  var c = getClient();
+  if(c && c.auth && c.auth.getSession){
+    try{
+      var r = await c.auth.getSession();
+      var u = r && r.data && r.data.session && r.data.session.user;
+      if(u) await sesudahMasuk(u);
+    }catch(e){ /* tetap di layar masuk */ }
+  }
+}
+if(document.readyState === "loading"){ document.addEventListener("DOMContentLoaded", init); }
+else { init(); }
+
+/* Ekspos untuk pengujian otomatis */
+window.__marketing = {
+  S:S, MARKETING_URL:MARKETING_URL, EMAIL_PEMILIK:EMAIL_PEMILIK,
+  CLOUD_URL:CLOUD_URL, CLOUD_ANON:CLOUD_ANON, SQL_TEXT:SQL_TEXT, CONTOH:CONTOH,
+  ALFABET_KODE:ALFABET_KODE,
+  setClient:function(m){ __client = m; },
+  getClient:getClient,
+  masuk:masuk, daftar:daftar, lupaSandi:lupaSandi, simpanSandiBaru:simpanSandiBaru, keluar:keluar,
+  periksaAkses:periksaAkses, sesudahMasuk:sesudahMasuk,
+  muatRingkasan:muatRingkasan, muatPengguna:muatPengguna, muatKode:muatKode, muatSemua:muatSemua,
+  tambahMarketing:tambahMarketing, toggleMarketing:toggleMarketing, salinKode:salinKode,
+  buatKodeOtomatis:buatKodeOtomatis, kodeBersih:kodeBersih,
+  tampilContoh:tampilContoh, tutupContoh:tutupContoh,
+  tampilLayar:tampilLayar, tampilDashboard:tampilDashboard, muatLayarAktif:muatLayarAktif,
+  tampilPopup:tampilPopup, tutupPopup:tutupPopup, salinSql:salinSql,
+  apakahErrorSetup:apakahErrorSetup, fmtTanggal:fmtTanggal, labelJenis:labelJenis,
+  tampilkanKotakSetup:tampilkanKotakSetup, htmlRingkasan:htmlRingkasan, htmlPengguna:htmlPengguna,
+  htmlKode:htmlKode, htmlSemua:htmlSemua
+};
+</script>
+</body>
+</html>
