@@ -1371,7 +1371,7 @@ window.__marketing = {
   /* Tombol panel masuk/daftar/lupa yang termasuk kelompok navigasi
      (bukan aksi sekali pakai). ID di luar daftar ini tidak pernah
      ditandai emas. */
-  var ID_NAVIGASI=["btnKeDaftar","btnBatalDaftar","btnKeLupa","btnBatalLupa"];
+  var ID_NAVIGASI=[];
   function bacaSet(){ try{ var s=localStorage.getItem(KUNCI_TOMBOL); if(!s) return {}; var o=JSON.parse(s); return (o&&typeof o==="object")?o:{}; }catch(e){ return {}; } }
   function simpanSet(o){ try{ localStorage.setItem(KUNCI_TOMBOL, JSON.stringify(o)); }catch(e){} }
   function bolehDitandai(el){
@@ -1379,7 +1379,6 @@ window.__marketing = {
     if(el.hasAttribute("aria-pressed")) return false;
     if(el.tagName==="BUTTON"&&el.type==="submit") return false;
     if(el.closest("nav.tabbar")) return true;
-    if(el.hasAttribute("data-contoh")||el.hasAttribute("data-tutup-contoh")) return true;
     if(el.id&&ID_NAVIGASI.indexOf(el.id)>=0) return true;
     return false;
   }
@@ -1388,8 +1387,6 @@ window.__marketing = {
     if(el.id) return "id:"+el.id;
     var v;
     if((v=el.getAttribute("data-layar"))) return "layar:"+v;
-    if((v=el.getAttribute("data-contoh"))) return "contoh:"+v;
-    if((v=el.getAttribute("data-tutup-contoh"))) return "tutup-contoh:"+v;
     return null;
   }
   function terapkanDariSimpanan(){
