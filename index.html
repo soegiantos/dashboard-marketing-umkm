@@ -251,6 +251,18 @@ nav.tabbar button.aktif{background:var(--gold);color:#1a1405;border-color:var(--
   </div>
 </div>
 
+<!-- Popup konfirmasi Ya / Batal -->
+<div class="popup-overlay" id="popupKonfirmasiOverlay" role="dialog" aria-modal="true" aria-labelledby="popupKonfirmasiJudul">
+  <div class="popup-card">
+    <h3 id="popupKonfirmasiJudul"></h3>
+    <p id="popupKonfirmasiIsi"></p>
+    <div class="aksi">
+      <button id="btnKonfirmasiBatal" type="button" class="ghost">Batal</button>
+      <button id="btnKonfirmasiYa" type="button">Ya, lanjutkan</button>
+    </div>
+  </div>
+</div>
+
 <script>
 "use strict";
 var MARKETING_URL = "https://dashboard-marketing-umkm.vercel.app/";
@@ -690,7 +702,7 @@ function kodeBersih(k){ return String(k||"").trim().toUpperCase().replace(/[^A-Z
 /* ===== State & client ===== */
 var S = { user:null, email:null, peran:null, layar:"ringkasan",
   kodeSaya:[], penggunaOffset:0, penggunaHabis:false, contohAktif:{},
-  ringkasanTerakhir:null };
+  ringkasanTerakhir:null, semuaPer:null };
 var __client = null;
 function getClient(){
   if(__client) return __client;
@@ -707,6 +719,25 @@ function tampilPopup(judul, isi){
   el("popupOverlay").classList.add("show");
 }
 function tutupPopup(){ el("popupOverlay").classList.remove("show"); }
+
+/* ===== Popup konfirmasi Ya / Batal (pola yang sama seperti dashboard Admin:
+   dipakai sebelum tindakan yang mengubah akses orang lain) ===== */
+var __konfirmasiYa = null;
+function tanyaKonfirmasi(judul, isi, onYa){
+  el("popupKonfirmasiJudul").textContent = judul;
+  el("popupKonfirmasiIsi").textContent = isi;
+  __konfirmasiYa = (typeof onYa === "function") ? onYa : null;
+  el("popupKonfirmasiOverlay").classList.add("show");
+}
+function tutupKonfirmasi(){
+  el("popupKonfirmasiOverlay").classList.remove("show");
+  __konfirmasiYa = null;
+}
+async function jawabKonfirmasiYa(){
+  var fn = __konfirmasiYa;
+  tutupKonfirmasi();
+  if(fn){ try{ await fn(); }catch(e){ tampilPopup("Belum bisa memproses", pesanRamah(e)); } }
+}
 function pesanRamah(err){
   var m = String((err && err.message) || err || "");
   if(/hanya pengguna yang terdaftar sebagai marketing/i.test(m)) return "Dashboard ini hanya untuk marketing yang terdaftar.\nHubungi pemilik aplikasi bila Anda merasa seharusnya bisa masuk.";
@@ -859,7 +890,7 @@ async function keluar(){
   if(c && c.auth && c.auth.signOut){ try{ await c.auth.signOut(); }catch(e){} }
   S.user = null; S.email = null; S.peran = null;
   S.kodeSaya = []; S.penggunaOffset = 0; S.penggunaHabis = false;
-  S.ringkasanTerakhir = null;
+  S.ringkasanTerakhir = null; S.semuaPer = null;
   el("layarDashboard").classList.add("hidden");
   el("layarMasuk").classList.remove("hidden");
   tampilPanel("panelMasuk");
@@ -1043,11 +1074,27 @@ async function muatKode(){
     return hasil;
   }
   var perKode = (hasil.data && Array.isArray(hasil.data.per_kode)) ? hasil.data.per_kode : [];
-  if(!perKode.length){
-    box.innerHTML = '<p class="muted">Belum ada kode marketing yang dipakai. Tambahkan marketing di layar "Semua marketing".</p>';
+  /* Gabungkan dengan semua kode aktif di daftar kode marketing, supaya
+     kode yang sudah dibuat tapi belum dipakai sebagai rujukan pun tampil
+     — dan supaya layar ini tidak berkata "belum ada" padahal kodenya ada. */
+  var kodeAktif = [];
+  var cKode = getClient();
+  if(cKode){
+    try{
+      var rKode = await cKode.from("marketing_kode").select("kode").eq("aktif", true);
+      if(rKode && !rKode.error && Array.isArray(rKode.data)){
+        rKode.data.forEach(function(r){ if(r && r.kode) kodeAktif.push(String(r.kode)); });
+      }
+    }catch(e){ /* tetap tampilkan kode dari ringkasan */ }
+  }
+  var semuaKode = [];
+  perKode.forEach(function(r){ if(r && r.kode && semuaKode.indexOf(r.kode) < 0) semuaKode.push(r.kode); });
+  kodeAktif.forEach(function(k){ if(semuaKode.indexOf(k) < 0) semuaKode.push(k); });
+  if(!semuaKode.length){
+    box.innerHTML = '<p class="muted">Belum ada kode marketing sama sekali. Tambahkan marketing di layar "Semua marketing" — kodenya dibuat saat marketing ditambahkan.</p>';
     return hasil;
   }
-  box.innerHTML = '<p class="muted">Sebagai pemilik, Anda melihat semua kode yang dipakai:</p>' + htmlKode(perKode.map(function(r){ return r.kode; }));
+  box.innerHTML = '<p class="muted">Sebagai pemilik, Anda melihat semua kode yang aktif:</p>' + htmlKode(semuaKode);
   return hasil;
 }
 function renderContohKode(){
@@ -1145,6 +1192,13 @@ async function muatSemua(){
       punya_tugas: false});
   });
   box.innerHTML = htmlSemua(rows);
+  /* Layar ini menggabungkan dua hitungan berurutan (hitung_pendaftar_marketing
+     lalu ringkasan_marketing): stempel jam menunjukkan data ini per jam berapa,
+     supaya angka yang bergeser sesaat tetap jelas waktunya. */
+  var sekarang = new Date();
+  var jam = String(sekarang.getHours()).padStart(2, "0") + ":" + String(sekarang.getMinutes()).padStart(2, "0");
+  S.semuaPer = jam;
+  box.innerHTML += '<p class="muted" style="margin-top:10px">Data per ' + jam + '.</p>';
   return {ok:true, data:rows};
 }
 function renderContohSemua(){
@@ -1166,6 +1220,7 @@ async function tambahMarketing(nama, email, kodeInput){
   if(!nama || !email){ tampilPopup("Belum lengkap","Isi nama dan email marketing, lalu coba lagi."); return {ok:false}; }
   if(email.indexOf("@") < 1 || email.indexOf(".") < 0){ tampilPopup("Email belum benar","Periksa lagi alamat email marketing."); return {ok:false}; }
   var kode = kodeInput;
+  var kodeSudahAda = false;
   if(kode && !/^[A-Z0-9]{6}$/.test(kode)){
     tampilPopup("Kode belum benar","Kode marketing terdiri dari 6 huruf atau angka, contoh: UMKM30.\nPeriksa lagi kodenya, atau kosongkan kolomnya bila ingin dibuat otomatis.");
     return {ok:false};
@@ -1199,7 +1254,9 @@ async function tambahMarketing(nama, email, kodeInput){
     }
     if(rAda.data){
       /* Kode sudah ada (misalnya kode bersama) — tetap boleh ditugaskan
-         ke marketing ini; nama kode yang lama tetap dipakai. */
+         ke marketing ini; nama kode yang lama tetap dipakai. Pemilik
+         diberi tahu lewat popup sukses di bawah. */
+      kodeSudahAda = true;
     }else{
       var rBuat;
       try{ rBuat = await c.from("marketing_kode").insert({kode:kode, nama:nama, aktif:true}); }
@@ -1231,7 +1288,11 @@ async function tambahMarketing(nama, email, kodeInput){
     if(apakahErrorSetup(rTugas2.error)){ tampilPopup("Fitur ini belum aktif","Fitur ini belum aktif — pengaturan cloud belum dijalankan. Silakan hubungi pemilik aplikasi."); return {ok:false, setup:true}; }
     tampilPopup("Belum bisa menambah", pesanRamah(rTugas2.error)); return {ok:false};
   }
-  tampilPopup("Marketing ditambahkan", nama + " (" + email + ") kini memegang kode " + kode + ".\nBagikan kode itu kepadanya.");
+  if(kodeSudahAda){
+    tampilPopup("Marketing ditambahkan", "Kode " + kode + " sudah dipakai sebelumnya — kini juga ditugaskan ke " + nama + " (" + email + ").\nBagikan kode itu kepadanya.");
+  }else{
+    tampilPopup("Marketing ditambahkan", nama + " (" + email + ") kini memegang kode " + kode + ".\nBagikan kode itu kepadanya.");
+  }
   el("mkNama").value = ""; el("mkEmail").value = ""; el("mkKode").value = "";
   await muatSemua();
   return {ok:true, kode:kode};
@@ -1246,12 +1307,43 @@ async function toggleMarketing(email, kode, aktifBaru){
     if(apakahErrorSetup(r.error)){ tampilPopup("Fitur ini belum aktif","Fitur ini belum aktif — pengaturan cloud belum dijalankan. Silakan hubungi pemilik aplikasi."); return {ok:false, setup:true}; }
     tampilPopup("Belum bisa mengubah", pesanRamah(r.error)); return {ok:false};
   }
+  /* S-B4: kode marketing ikut nonaktif/aktif bersama aksesnya, supaya
+     kode yang sudah nonaktif tidak bisa dipakai mendaftar — sama seperti
+     toggle di aplikasi Admin. */
+  if(kode){
+    var rk;
+    try{ rk = await c.from("marketing_kode").update({aktif:aktifBaru}).eq("kode", kode); }
+    catch(e){
+      await muatSemua();
+      tampilPopup("Kode belum bisa diubah","Akses sudah diubah, tetapi kode " + kode + " belum bisa diubah — periksa koneksi internet Anda, lalu coba lagi.");
+      return {ok:false, error:e, kodeGagal:true};
+    }
+    if(rk.error){
+      await muatSemua();
+      tampilPopup("Kode belum bisa diubah","Akses sudah diubah, tetapi kode " + kode + " belum bisa diubah. Coba lagi sebentar lagi.");
+      return {ok:false, error:rk.error, kodeGagal:true};
+    }
+  }
   tampilPopup(aktifBaru ? "Penugasan diaktifkan" : "Penugasan dinonaktifkan",
     aktifBaru
-      ? "Kode " + kode + " untuk " + email + " aktif kembali."
-      : "Kode " + kode + " untuk " + email + " sudah nonaktif.\nPengguna yang sudah terdaftar lewat kode itu tetap tercatat, tapi pemilik kode tidak bisa masuk lagi.");
+      ? "Akses dan kode " + kode + " sudah aktif kembali — orang ini bisa masuk lagi dan kodenya bisa dipakai mendaftar."
+      : "Akses dan kode " + kode + " sudah nonaktif — orang ini tidak bisa masuk lagi dan kodenya tidak bisa dipakai mendaftar.\nPengguna yang sudah terdaftar lewat kode itu tetap tercatat.");
   await muatSemua();
   return {ok:true};
+}
+/* Minta konfirmasi dulu sebelum mengubah akses seseorang — pola yang sama
+   seperti "Hapus" di dashboard Admin (dialog "Ya, lanjutkan" / "Batal"). */
+function mintaToggleMarketing(email, kode, aktifBaru){
+  if(aktifBaru){
+    tanyaKonfirmasi("Aktifkan penugasan ini?",
+      "Penugasan kode " + kode + " untuk " + email + " akan diaktifkan kembali.\nOrang ini bisa masuk lagi.",
+      function(){ return toggleMarketing(email, kode, true); });
+  }else{
+    tanyaKonfirmasi("Nonaktifkan penugasan ini?",
+      "Penugasan kode " + kode + " untuk " + email + " akan dinonaktifkan.\nOrang ini tidak bisa masuk lagi.",
+      function(){ return toggleMarketing(email, kode, false); });
+  }
+  return {ok:true, konfirmasi:true};
 }
 
 /* ===== Tampilkan contoh / tutup contoh ===== */
@@ -1272,6 +1364,9 @@ function hashParam(k){ try{ return new URLSearchParams(String(window.location.ha
 function bindEvents(){
   el("btnPopupTutup").addEventListener("click", tutupPopup);
   el("popupOverlay").addEventListener("click", function(e){ if(e.target === el("popupOverlay")) tutupPopup(); });
+  el("btnKonfirmasiYa").addEventListener("click", jawabKonfirmasiYa);
+  el("btnKonfirmasiBatal").addEventListener("click", tutupKonfirmasi);
+  el("popupKonfirmasiOverlay").addEventListener("click", function(e){ if(e.target === el("popupKonfirmasiOverlay")) tutupKonfirmasi(); });
   el("btnMasuk").addEventListener("click", async function(){ await masuk(el("emailMasuk").value, el("sandiMasuk").value); });
   el("btnKeDaftar").addEventListener("click", function(){ tampilPanel("panelDaftar"); });
   el("btnBatalDaftar").addEventListener("click", function(){ tampilPanel("panelMasuk"); });
@@ -1309,7 +1404,7 @@ function bindEvents(){
       if(tg){
         var bagian = tg.split("|");
         if(bagian.length === 3){
-          toggleMarketing(bagian[0], bagian[1], bagian[2] === "1");
+          mintaToggleMarketing(bagian[0], bagian[1], bagian[2] === "1");
         }
         return;
       }
@@ -1346,7 +1441,9 @@ window.__marketing = {
   masuk:masuk, daftar:daftar, lupaSandi:lupaSandi, simpanSandiBaru:simpanSandiBaru, keluar:keluar,
   periksaAkses:periksaAkses, sesudahMasuk:sesudahMasuk,
   muatRingkasan:muatRingkasan, muatPengguna:muatPengguna, muatKode:muatKode, muatSemua:muatSemua,
-  tambahMarketing:tambahMarketing, toggleMarketing:toggleMarketing, salinKode:salinKode,
+  tambahMarketing:tambahMarketing, toggleMarketing:toggleMarketing, mintaToggleMarketing:mintaToggleMarketing,
+  tanyaKonfirmasi:tanyaKonfirmasi, tutupKonfirmasi:tutupKonfirmasi, jawabKonfirmasiYa:jawabKonfirmasiYa,
+  salinKode:salinKode,
   buatKodeOtomatis:buatKodeOtomatis, kodeBersih:kodeBersih,
   tampilContoh:tampilContoh, tutupContoh:tutupContoh,
   tampilLayar:tampilLayar, tampilDashboard:tampilDashboard, muatLayarAktif:muatLayarAktif,
